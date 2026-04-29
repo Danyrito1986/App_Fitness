@@ -178,35 +178,20 @@ def get_routines():
 
 def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[Exercise]:
     """
-    Obtiene los ejercicios desde Supabase filtrados por género, nivel, mes y día.
+    Obtiene los ejercicios desde Supabase. 
+    Ajustado para usar rutina_id como mapeo de Día debido a restricciones de esquema.
     """
     try:
-        print(f"DEBUG_EJERCICIOS: Buscando para -> Gen: {genero}, Niv: {nivel}, Mes: {mes}, Dia: {dia}")
+        print(f"DEBUG_EJERCICIOS: Buscando para Día (rutina_id): {dia}")
         
-        # Primero, vamos a ver si la tabla tiene ALGO (Diagnóstico de datos)
-        check = supabase.table("ejercicios").select("count", count="exact").limit(1).execute()
-        total_en_db = check.count if check.count is not None else 0
-        print(f"DEBUG_EJERCICIOS: Total de filas en tabla 'ejercicios': {total_en_db}")
-
-        if total_en_db == 0:
-            print("DEBUG_EJERCICIOS: ¡LA TABLA 'EJERCICIOS' ESTÁ VACÍA EN SUPABASE!")
-            return []
-
-        # Consulta con filtros
+        # Filtramos por rutina_id que representa el Día 1, 2, 3, etc.
         response = supabase.table("ejercicios")\
             .select("*")\
-            .eq("genero", genero)\
-            .eq("nivel", nivel)\
-            .eq("mes", mes)\
-            .eq("dia", dia)\
+            .eq("rutina_id", dia)\
             .execute()
         
         if not response.data:
-            # Si no hay datos, hacemos una consulta más amplia para ver qué campos existen
-            print(f"DEBUG_EJERCICIOS: Cero resultados con filtros estrictos. Intentando ver formato de un ejercicio...")
-            sample = supabase.table("ejercicios").select("*").limit(1).execute()
-            if sample.data:
-                print(f"DEBUG_EJERCICIOS: Ejemplo de datos en DB: {sample.data[0]}")
+            print(f"DEBUG_EJERCICIOS: No hay ejercicios para rutina_id: {dia}")
             return []
             
         return [
@@ -220,7 +205,7 @@ def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[E
             ) for ej in response.data
         ]
     except Exception as e:
-        print(f"DEBUG_EJERCICIOS: Error crítico: {e}")
+        print(f"DEBUG_EJERCICIOS: Error: {e}")
         return []
 
 def get_dietas() -> list[Diet]:
