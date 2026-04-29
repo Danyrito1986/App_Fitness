@@ -90,5 +90,13 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     import os
+    # Render usa la variable de entorno PORT, local usa 8550
     port = int(os.environ.get("PORT", 8550))
-    ft.app(target=main, view="web_browser", host="0.0.0.0", port=port, assets_dir="assets")
+    # 'web_browser' es vital para que funcione como PWA en celulares
+    ft.app(
+        target=main, 
+        view=ft.AppView.WEB_BROWSER, 
+        host="0.0.0.0", 
+        port=port, 
+        assets_dir="assets"
+    )
