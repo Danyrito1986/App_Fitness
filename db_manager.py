@@ -49,42 +49,51 @@ def register_user(email: str, password: str, nombre: str):
 def get_user() -> User:
     """Obtiene el perfil del usuario actualmente autenticado vinculando Auth con la tabla 'usuarios'."""
     try:
+        print("DEBUG: Intentando obtener usuario de Auth...")
         auth_response = supabase.auth.get_user()
-        if auth_response and auth_response.user:
-            email = auth_response.user.email
+        
+        if not auth_response or not auth_response.user:
+            print("DEBUG: No hay sesión activa en Supabase Auth.")
+            return None
             
-            # Intentamos buscar por correo o email directamente en Supabase
-            # Probamos primero con 'email' y si falla con 'correo'
-            for field in ["email", "correo"]:
-                try:
-                    response = supabase.table("usuarios").select("*").eq(field, email).limit(1).execute()
-                    if response.data:
-                        u_data = response.data[0]
-                        return User(
-                            id=u_data["id"], 
-                            nombre=u_data.get("nombre") or "Usuario", 
-                            objetivo=u_data.get("objetivo") or "Aumento de masa muscular", 
-                            peso_actual=float(u_data.get("peso_actual") or 0.0),
-                            genero=u_data.get("genero") or "Hombre",
-                            altura=float(u_data.get("altura") or 170.0),
-                            cuello=float(u_data.get("cuello") or 40.0),
-                            cintura=float(u_data.get("cintura") or 85.0),
-                            cadera=float(u_data.get("cadera") or 90.0),
-                            pecho=float(u_data.get("pecho") or 100.0),
-                            gluteo=float(u_data.get("gluteo") or 95.0),
-                            bicep=float(u_data.get("bicep") or 35.0),
-                            muslo=float(u_data.get("muslo") or 55.0),
-                            edad=int(u_data.get("edad") or 25),
-                            mes_actual=int(u_data.get("mes_actual") or 1),
-                            entrenos_mes=int(u_data.get("entrenos_mes") or 0)
-                        )
-                except:
-                    continue
-            
-            print(f"No se encontró perfil en tabla 'usuarios' para {email}")
+        email = auth_response.user.email
+        print(f"DEBUG: Sesión activa para: {email}")
+        
+        # Intentamos buscar por correo o email directamente en Supabase
+        for field in ["email", "correo"]:
+            try:
+                print(f"DEBUG: Buscando en tabla 'usuarios' por columna '{field}'...")
+                response = supabase.table("usuarios").select("*").eq(field, email).limit(1).execute()
+                
+                if response.data and len(response.data) > 0:
+                    u_data = response.data[0]
+                    print(f"DEBUG: Perfil encontrado para {email}")
+                    return User(
+                        id=u_data["id"], 
+                        nombre=u_data.get("nombre") or "Usuario", 
+                        objetivo=u_data.get("objetivo") or "Aumento de masa muscular", 
+                        peso_actual=float(u_data.get("peso_actual") or 0.0),
+                        genero=u_data.get("genero") or "Hombre",
+                        altura=float(u_data.get("altura") or 170.0),
+                        cuello=float(u_data.get("cuello") or 40.0),
+                        cintura=float(u_data.get("cintura") or 85.0),
+                        cadera=float(u_data.get("cadera") or 90.0),
+                        pecho=float(u_data.get("pecho") or 100.0),
+                        gluteo=float(u_data.get("gluteo") or 95.0),
+                        bicep=float(u_data.get("bicep") or 35.0),
+                        muslo=float(u_data.get("muslo") or 55.0),
+                        edad=int(u_data.get("edad") or 25),
+                        mes_actual=int(u_data.get("mes_actual") or 1),
+                        entrenos_mes=int(u_data.get("entrenos_mes") or 0)
+                    )
+            except Exception as e:
+                print(f"DEBUG: Error buscando en columna '{field}': {e}")
+                continue
+        
+        print(f"DEBUG: No se encontró ninguna fila en la tabla 'usuarios' vinculada al correo {email}")
 
     except Exception as e:
-        print(f"Error en get_user: {e}")
+        print(f"DEBUG: Error crítico en get_user: {e}")
     return None
 
 def update_user_profile(user_id: int, data: dict) -> bool:
