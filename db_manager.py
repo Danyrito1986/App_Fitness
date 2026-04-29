@@ -114,16 +114,11 @@ def get_user() -> User:
     return None
 
 def update_user_profile(user_id: int, data: dict) -> bool:
-    """Actualiza los datos del perfil de forma dinámica para evitar sobrescribir con valores por defecto."""
+    """Actualiza los datos del perfil usando el ID como identificador primario."""
     try:
-        auth_user = supabase.auth.get_user()
-        if not auth_user or not auth_user.user:
-            return False
-            
-        email = auth_user.user.email
+        print(f"DEBUG: Intentando actualizar perfil para ID: {user_id}")
         
-        # Mapeo de nombres de campos del diccionario a nombres de columnas en DB
-        # Esto asegura compatibilidad si los nombres difieren
+        # Mapeo de campos
         mapping = {
             "nombre": "nombre",
             "objetivo": "objetivo",
@@ -144,18 +139,33 @@ def update_user_profile(user_id: int, data: dict) -> bool:
                 update_data[mapping[key]] = value
 
         if not update_data:
+            print("DEBUG: No hay datos válidos para actualizar.")
             return False
 
-        for field in ["email", "correo"]:
-            try:
-                res = supabase.table("usuarios").update(update_data).eq(field, email).execute()
-                if res.data:
-                    return True
-            except:
-                continue
+        # Intentamos la actualización directamente por ID (más seguro y rápido)
+        res = supabase.table("usuarios").update(update_data).eq("id", user_id).execute()
+        
+        if res.data and len(res.data) > 0:
+            print(f"DEBUG: Perfil {user_id} actualizado con éxito.")
+            return True
+        else:
+            print(f"DEBUG: No se encontró el registro con ID {user_id} para actualizar.")
+            
+            # Fallback: Intentar por email si el ID falló (a veces el ID cambia en sesiones sucias)
+            auth_user = supabase.auth.get_user()
+            if auth_user and auth_user.user:
+                email = auth_user.user.email
+                for field in ["email", "correo"]:
+                    try:
+                        res_alt = supabase.table("usuarios").update(update_data).eq(field, email).execute()
+                        if res_alt.data:
+                            print(f"DEBUG: Perfil actualizado vía {field}.")
+                            return True
+                    except: continue
+        
         return False
     except Exception as e:
-        print(f"Error update_user_profile: {e}")
+        print(f"DEBUG: Error crítico en update_user_profile: {e}")
         return False
 
 def get_routines():
