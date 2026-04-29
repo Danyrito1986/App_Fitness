@@ -81,13 +81,7 @@ def get_user() -> User:
                 except:
                     continue
             
-            # Fallback si no encuentra por email específico
-            response = supabase.table("usuarios").select("*").limit(1).execute()
-            if response.data:
-                u_data = response.data[0]
-                return User(id=u_data["id"], nombre=u_data.get("nombre", "Usuario"), 
-                            objetivo=u_data.get("objetivo", "Aumento de masa muscular"), 
-                            peso_actual=float(u_data.get("peso_actual", 0.0)))
+            print(f"No se encontró perfil en tabla 'usuarios' para {email}")
 
     except Exception as e:
         print(f"Error en get_user: {e}")
@@ -121,24 +115,10 @@ def update_user_profile(user_id: int, data: dict) -> bool:
                 }).eq(field, email).execute()
                 
                 if res.data:
-                    print(f"Perfil actualizado exitosamente en columna '{field}'")
                     return True
             except:
                 continue
-                
-        # Si falla por email, intentamos por ID como último recurso
-        supabase.table("usuarios").update({
-            "nombre": data["nombre"], 
-            "objetivo": data["objetivo"], 
-            "peso_actual": data["peso"],
-            "genero": data.get("genero", "Hombre"),
-            "altura": data.get("altura", 170.0),
-            "cuello": data.get("cuello", 40.0),
-            "cintura": data.get("cintura", 85.0),
-            "cadera": data.get("cadera", 90.0),
-            "edad": data.get("edad", 25)
-        }).eq("id", user_id).execute()
-        return True
+        return False
     except Exception as e:
         print(f"Error update_user_profile: {e}")
         return False
@@ -154,17 +134,19 @@ def get_routines():
 def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[Exercise]:
     """
     Obtiene los ejercicios desde Supabase filtrados por género, nivel, mes y día.
-    Este es el núcleo dinámico que permite que la app funcione igual que la de la barbería.
     """
     try:
+        # Corregido: Agregado el filtro de 'mes'
         response = supabase.table("ejercicios")\
             .select("*")\
             .eq("genero", genero)\
             .eq("nivel", nivel)\
+            .eq("mes", mes)\
             .eq("dia", dia)\
             .execute()
         
         if not response.data:
+            print(f"DEBUG: No se encontraron ejercicios para {genero}, {nivel}, Mes {mes}, Dia {dia}")
             return []
             
         return [
