@@ -181,7 +181,18 @@ def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[E
     Obtiene los ejercicios desde Supabase filtrados por género, nivel, mes y día.
     """
     try:
-        # Corregido: Agregado el filtro de 'mes'
+        print(f"DEBUG_EJERCICIOS: Buscando para -> Gen: {genero}, Niv: {nivel}, Mes: {mes}, Dia: {dia}")
+        
+        # Primero, vamos a ver si la tabla tiene ALGO (Diagnóstico de datos)
+        check = supabase.table("ejercicios").select("count", count="exact").limit(1).execute()
+        total_en_db = check.count if check.count is not None else 0
+        print(f"DEBUG_EJERCICIOS: Total de filas en tabla 'ejercicios': {total_en_db}")
+
+        if total_en_db == 0:
+            print("DEBUG_EJERCICIOS: ¡LA TABLA 'EJERCICIOS' ESTÁ VACÍA EN SUPABASE!")
+            return []
+
+        # Consulta con filtros
         response = supabase.table("ejercicios")\
             .select("*")\
             .eq("genero", genero)\
@@ -191,7 +202,11 @@ def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[E
             .execute()
         
         if not response.data:
-            print(f"DEBUG: No se encontraron ejercicios para {genero}, {nivel}, Mes {mes}, Dia {dia}")
+            # Si no hay datos, hacemos una consulta más amplia para ver qué campos existen
+            print(f"DEBUG_EJERCICIOS: Cero resultados con filtros estrictos. Intentando ver formato de un ejercicio...")
+            sample = supabase.table("ejercicios").select("*").limit(1).execute()
+            if sample.data:
+                print(f"DEBUG_EJERCICIOS: Ejemplo de datos en DB: {sample.data[0]}")
             return []
             
         return [
@@ -205,7 +220,7 @@ def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[E
             ) for ej in response.data
         ]
     except Exception as e:
-        print(f"Error al traer ejercicios dinámicos: {e}")
+        print(f"DEBUG_EJERCICIOS: Error crítico: {e}")
         return []
 
 def get_dietas() -> list[Diet]:
