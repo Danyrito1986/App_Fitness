@@ -56,7 +56,7 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
 
     action_button = ft.ElevatedButton(
         text="Iniciar Sesión",
-        style=ft.ButtonStyle(color=ft.colors.WHITE, bgcolor=ft.colors.BLUE_700),
+        style=ft.ButtonStyle(color="white", bgcolor="blue700"),
         on_click=handle_action,
         width=300
     )
@@ -69,9 +69,9 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
     return ft.Container(
         content=ft.Column(
             [
-                ft.Icon(ft.icons.FITNESS_CENTER, size=80, color=ft.colors.BLUE_700),
+                ft.Icon(ft.icons.FITNESS_CENTER, size=80, color="blue700"),
                 ft.Text("Bienvenido a App Fitness", size=24, weight="bold"),
-                ft.Text("Tu entrenador personal en la nube", size=14, color=ft.colors.GREY_400),
+                ft.Text("Tu entrenador personal en la nube", size=14, color="grey400"),
                 ft.Divider(height=20, color="transparent"),
                 name_field,
                 email_field,

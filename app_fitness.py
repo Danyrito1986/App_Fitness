@@ -21,7 +21,7 @@ def main(page: ft.Page):
     def show_snackbar(message: str, is_error: bool = False):
         page.snack_bar = ft.SnackBar(
             content=ft.Text(message, color="white"),
-            bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700,
+            bgcolor="red700" if is_error else "green700",
             action="Cerrar",
             duration=3000
         )
@@ -49,7 +49,7 @@ def main(page: ft.Page):
         update_view(int(e.data))
 
     nav_bar = ft.NavigationBar(
-        bgcolor=ft.colors.SURFACE_VARIANT,
+        bgcolor="surfacevariant",
         selected_index=0,
         on_change=on_nav_change,
         destinations=[
