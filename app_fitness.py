@@ -53,10 +53,10 @@ def main(page: ft.Page):
         selected_index=0,
         on_change=on_nav_change,
         destinations=[
-            ft.NavigationDestination(icon=ft.icons.PERSON, label="Perfil"),
-            ft.NavigationDestination(icon=ft.icons.FITNESS_CENTER, label="Entreno"),
-            ft.NavigationDestination(icon=ft.icons.RESTAURANT, label="Dieta"),
-            ft.NavigationDestination(icon=ft.icons.SHOW_CHART, label="Progreso"),
+            ft.NavigationDestination(icon="person", label="Perfil"),
+            ft.NavigationDestination(icon="fitness_center", label="Entreno"),
+            ft.NavigationDestination(icon="restaurant", label="Dieta"),
+            ft.NavigationDestination(icon="show_chart", label="Progreso"),
         ],
         visible=False
     )
