@@ -1,0 +1,16 @@
+{
+    "name": "App Fitness Rivas",
+    "short_name": "Fitness",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#121212",
+    "theme_color": "#FFD700",
+    "description": "Tu entrenador personal y seguimiento de dieta.",
+    "icons": [
+        {
+            "src": "favicon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
