@@ -9,6 +9,7 @@ class User:
     objetivo: str
     peso_actual: float
     genero: str = "Hombre"
+    nivel: str = "Novato"
     altura: float = 170.0
     cuello: float = 40.0
     cintura: float = 85.0

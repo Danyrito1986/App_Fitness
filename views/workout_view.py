@@ -61,7 +61,13 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         if dia: dia_seleccionado = dia
         
         # LLAMADA DINÁMICA A SUPABASE (Patrón Barbería)
-        exs = db.get_dynamic_exercises(user.genero, nivel_seleccionado, mes_seleccionado, dia_seleccionado)
+        exs = db.get_dynamic_exercises(
+            user.genero, 
+            nivel_seleccionado, 
+            mes_seleccionado, 
+            dia_seleccionado,
+            user.objetivo
+        )
         
         lista_ejercicios.controls.clear()
         

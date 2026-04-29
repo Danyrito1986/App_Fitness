@@ -69,8 +69,8 @@ def get_user() -> User:
                         objetivo=u_data.get("objetivo") or "Aumento de masa muscular", 
                         peso_actual=float(u_data.get("peso_actual") or 0.0),
                         genero=u_data.get("genero") or "Hombre",
-                        altura=float(u_data.get("altura") or 170.0),
-                        cuello=float(u_data.get("cuello") or 40.0),
+                        nivel=u_data.get("nivel") or "Novato",
+                        altura=float(u_data.get("altura") or 170.0),                        cuello=float(u_data.get("cuello") or 40.0),
                         cintura=float(u_data.get("cintura") or 85.0),
                         cadera=float(u_data.get("cadera") or 90.0),
                         pecho=float(u_data.get("pecho") or 100.0),
@@ -124,6 +124,7 @@ def update_user_profile(user_id: int, data: dict) -> bool:
             "objetivo": "objetivo",
             "peso": "peso_actual",
             "genero": "genero",
+            "nivel": "nivel",
             "altura": "altura",
             "cuello": "cuello",
             "cintura": "cintura",
@@ -176,22 +177,34 @@ def get_routines():
     except:
         return []
 
-def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[Exercise]:
+def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int, objetivo: str) -> list[Exercise]:
     """
-    Obtiene los ejercicios desde Supabase. 
-    Ajustado para usar rutina_id como mapeo de Día debido a restricciones de esquema.
+    Obtiene los ejercicios desde Supabase filtrados por el perfil completo del usuario.
     """
     try:
-        print(f"DEBUG_EJERCICIOS: Buscando para Día (rutina_id): {dia}")
+        print(f"DEBUG_PRO: Buscando -> {genero}, {nivel}, Mes {mes}, Dia {dia}, Obj: {objetivo}")
         
-        # Filtramos por rutina_id que representa el Día 1, 2, 3, etc.
         response = supabase.table("ejercicios")\
             .select("*")\
-            .eq("rutina_id", dia)\
+            .eq("genero", genero)\
+            .eq("nivel", nivel)\
+            .eq("mes", mes)\
+            .eq("dia", dia)\
+            .eq("objetivo", objetivo)\
             .execute()
         
         if not response.data:
-            print(f"DEBUG_EJERCICIOS: No hay ejercicios para rutina_id: {dia}")
+            print("DEBUG_PRO: No hay ejercicios exactos. Intentando búsqueda flexible (sin objetivo)...")
+            # Fallback a búsqueda sin objetivo por si acaso
+            response = supabase.table("ejercicios")\
+                .select("*")\
+                .eq("genero", genero)\
+                .eq("nivel", nivel)\
+                .eq("mes", mes)\
+                .eq("dia", dia)\
+                .execute()
+
+        if not response.data:
             return []
             
         return [
@@ -205,7 +218,7 @@ def get_dynamic_exercises(genero: str, nivel: str, mes: int, dia: int) -> list[E
             ) for ej in response.data
         ]
     except Exception as e:
-        print(f"DEBUG_EJERCICIOS: Error: {e}")
+        print(f"DEBUG_PRO: Error: {e}")
         return []
 
 def get_dietas() -> list[Diet]:

@@ -19,6 +19,17 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
         on_change=lambda _: actualizar_ui()
     )
 
+    dd_nivel = ft.Dropdown(
+        label="Nivel de Experiencia",
+        value=user.nivel,
+        options=[
+            ft.dropdown.Option("Novato"),
+            ft.dropdown.Option("Intermedio"),
+            ft.dropdown.Option("Pro")
+        ],
+        width=350, border_color="#FFD700"
+    )
+
     dd_objetivo = ft.Dropdown(
         label="Objetivo Fitness",
         value=user.objetivo,
@@ -83,6 +94,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
             success = db.update_user_profile(user.id, {
                 'nombre': txt_nombre.value,
                 'objetivo': dd_objetivo.value,
+                'nivel': dd_nivel.value,
                 'peso': float(txt_peso.value),
                 'genero': dd_genero.value,
                 'altura': float(txt_altura.value),
@@ -92,9 +104,10 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
                 'edad': int(txt_edad.value)
             })
             if success:
-                # Actualizar el objeto user en memoria para que otras vistas lo vean
+                # Actualizar el objeto user en memoria
                 user.nombre = txt_nombre.value
                 user.objetivo = dd_objetivo.value
+                user.nivel = dd_nivel.value
                 user.peso_actual = float(txt_peso.value)
                 user.genero = dd_genero.value
                 user.altura = float(txt_altura.value)
@@ -118,6 +131,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
         ft.Text("Configuración de Perfil", size=24, weight="bold", color="#FFD700"),
         txt_nombre,
         dd_genero,
+        dd_nivel,
         dd_objetivo,
         ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", spacing=10),
         
