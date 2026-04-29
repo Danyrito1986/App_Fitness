@@ -9,8 +9,8 @@ from supabase_config import create_custom_client
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-url: str = os.environ.get("SUPABASE_URL", "").strip()
-key: str = os.environ.get("SUPABASE_KEY", "").strip().replace("\n", "").replace("\r", "")
+url: str = os.environ.get("SUPABASE_URL", "https://igaxcfbniemjbzazldux.supabase.co").strip()
+key: str = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXhjZmJuaWVtamJ6YXpsZHV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA3ODgsImV4cCI6MjA5MTY2Njc4OH0.qlpwd_CUQYodWxlXUQj_M8Ji3jtYQHbNKgLfKwn9r0c").strip().replace("\n", "").replace("\r", "")
 
 if not url or not key:
     raise ValueError("Error: No se encontraron las variables de entorno SUPABASE_URL o SUPABASE_KEY en el archivo .env")
