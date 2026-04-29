@@ -11,7 +11,7 @@ from views.login_view import login_view
 def main(page: ft.Page):
     # --- CONFIGURACION DE LA PAGINA ---
     page.title = "App Fitness V7 - PRO"
-    page.theme_mode = ft.ThemeMode.DARK
+    page.theme_mode = "dark"
     page.bgcolor = "#121212"
     page.padding = 0
     page.window_width = 420
@@ -46,10 +46,12 @@ def main(page: ft.Page):
         page.update()
 
     def on_nav_change(e):
-        update_view(int(e.data))
+        update_view(int(e.control.selected_index))
 
+    # Cambiamos a NavigationRail o Tabs si NavigationBar sigue fallando
+    # Por ahora intentamos NavigationBar con la versión 0.23.2 y strings
     nav_bar = ft.NavigationBar(
-        bgcolor="surfacevariant",
+        bgcolor="#1E1E1E",
         selected_index=0,
         on_change=on_nav_change,
         destinations=[
@@ -88,7 +90,5 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     import os
-    # Obtenemos el puerto de la variable de entorno (Render lo asigna automáticamente)
     port = int(os.environ.get("PORT", 8550))
-    # Ejecutamos en modo Web Browser para acceso público
-    ft.app(target=main, view=ft.AppView.WEB_BROWSER, host="0.0.0.0", port=port, assets_dir="assets")
+    ft.app(target=main, view="web_browser", host="0.0.0.0", port=port, assets_dir="assets")

@@ -6,9 +6,9 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
     is_login_mode = True
 
     # Componentes de UI
-    email_field = ft.TextField(label="Correo Electrónico", prefix_icon=ft.icons.EMAIL, width=300)
-    password_field = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, prefix_icon=ft.icons.LOCK, width=300)
-    name_field = ft.TextField(label="Nombre Completo", prefix_icon=ft.icons.PERSON, width=300, visible=False)
+    email_field = ft.TextField(label="Correo Electrónico", prefix_icon="email", width=300)
+    password_field = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, prefix_icon="lock", width=300)
+    name_field = ft.TextField(label="Nombre Completo", prefix_icon="person", width=300, visible=False)
     
     error_text = ft.Text(color="red", size=12)
     
@@ -69,7 +69,7 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
     return ft.Container(
         content=ft.Column(
             [
-                ft.Icon(ft.icons.FITNESS_CENTER, size=80, color="blue700"),
+                ft.Icon("fitness_center", size=80, color="blue700"),
                 ft.Text("Bienvenido a App Fitness", size=24, weight="bold"),
                 ft.Text("Tu entrenador personal en la nube", size=14, color="grey400"),
                 ft.Divider(height=20, color="transparent"),
@@ -81,8 +81,8 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
                 action_button,
                 toggle_button
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            alignment=ft.MainAxisAlignment.CENTER
+            horizontal_alignment="center",
+            alignment="center"
         ),
         expand=True,
         alignment=ft.alignment.center

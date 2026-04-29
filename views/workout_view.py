@@ -82,7 +82,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
                                 ft.Text(ex.nombre, weight="bold", size=16),
                                 ft.Text(f"{ex.series} series x {ex.reps} reps", size=12, color="white54")
                             ], expand=True),
-                            ft.IconButton(ft.icons.TIMER_OUTLINED, icon_color="#FFD700")
+                            ft.IconButton("timer_outlined", icon_color="#FFD700")
                         ]),
                         padding=10, bgcolor="#1E1E1E", border_radius=10
                     )
@@ -135,10 +135,10 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         
         ft.ElevatedButton(
             "FINALIZAR ENTRENAMIENTO", 
-            icon=ft.icons.CHECK_CIRCLE,
+            icon="check_circle",
             on_click=registrar_entreno,
             style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"),
             width=350, height=50
         ),
         ft.Container(height=20)
-    ], expand=True, horizontal_alignment="center", scroll=ft.ScrollMode.ADAPTIVE)
+    ], expand=True, horizontal_alignment="center", scroll="adaptive")

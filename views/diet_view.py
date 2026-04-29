@@ -36,9 +36,9 @@ def diet_view(page: ft.Page, user: User, show_snackbar):
                     ),
                     ft.Container(
                         content=ft.Column([
-                            ft.Row([ft.Icon(ft.icons.RESTAURANT, size=16, color="white54"), ft.Text(ali['proteina'], size=13)]),
-                            ft.Row([ft.Icon(ft.icons.GRAIN, size=16, color="white54"), ft.Text(ali['carbo'], size=13)]),
-                            ft.Row([ft.Icon(ft.icons.ECO, size=16, color="white54"), ft.Text(ali['grasa'], size=13)]),
+                            ft.Row([ft.Icon("restaurant", size=16, color="white54"), ft.Text(ali['proteina'], size=13)]),
+                            ft.Row([ft.Icon("grain", size=16, color="white54"), ft.Text(ali['carbo'], size=13)]),
+                            ft.Row([ft.Icon("eco", size=16, color="white54"), ft.Text(ali['grasa'], size=13)]),
                         ], spacing=8),
                         padding=ft.padding.only(left=20, right=20, bottom=20)
                     )
@@ -65,9 +65,9 @@ def diet_view(page: ft.Page, user: User, show_snackbar):
 
         ft.Text("DESGLOSE POR COMIDA (CANTIDADES EN GRAMOS)", size=12, color="white38", weight="bold"),
 
-        card_comida_detallada("Desayuno", 0.30, ft.icons.BRUNCH_DINING),
-        card_comida_detallada("Almuerzo", 0.40, ft.icons.LUNCH_DINING),
-        card_comida_detallada("Cena", 0.30, ft.icons.DINNER_DINING),
+        card_comida_detallada("Desayuno", 0.30, "brunch_dining"),
+        card_comida_detallada("Almuerzo", 0.40, "lunch_dining"),
+        card_comida_detallada("Cena", 0.30, "dinner_dining"),
 
         ft.Container(height=20),
         ft.Text("* Las medidas son en alimentos ya cocidos.", size=10, color="white24", italic=True)

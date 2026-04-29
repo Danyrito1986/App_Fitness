@@ -36,11 +36,11 @@ def home_view(page: ft.Page, user: User, show_snackbar):
     widget_agua = ft.Container(
         content=ft.Column([
             ft.Row([
-                ft.Icon(ft.icons.WATER_DROP, color="#42A5F5"),
+                ft.Icon("water_drop", color="#42A5F5"),
                 ft.Text("Hidratación", weight="bold"),
             ], alignment="center"),
             lbl_agua,
-            ft.IconButton(ft.icons.ADD_CIRCLE, icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
+            ft.IconButton("add_circle", icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
         ], horizontal_alignment="center"),
         padding=15, bgcolor="#1E1E1E", border_radius=20, width=170
     )

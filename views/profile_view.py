@@ -140,9 +140,9 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
         ft.Container(height=10),
         ft.ElevatedButton(
             "GUARDAR PERFIL Y MEDIDAS", 
-            icon=ft.icons.SAVE, 
+            icon="save", 
             on_click=guardar_perfil,
             style=ft.ButtonStyle(color="black", bgcolor="#FFD700"),
             width=350, height=50
         )
-    ], expand=True, horizontal_alignment="center", scroll=ft.ScrollMode.ADAPTIVE)
+    ], expand=True, horizontal_alignment="center", scroll="adaptive")
