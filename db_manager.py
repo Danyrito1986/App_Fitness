@@ -3,6 +3,7 @@ from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from models import User, Exercise, Diet, WeightHistory, WorkoutLog, HydrationLog, PRLog
+from supabase_config import create_custom_client
 
 # Cargar variables de entorno de forma dinámica
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,8 +15,8 @@ key: str = os.environ.get("SUPABASE_KEY")
 if not url or not key:
     raise ValueError("Error: No se encontraron las variables de entorno SUPABASE_URL o SUPABASE_KEY en el archivo .env")
 
-# Inicializacion del cliente de Supabase
-supabase: Client = create_client(url, key)
+# Inicializacion del cliente de Supabase optimizado para Render
+supabase: Client = create_custom_client(url, key)
 
 def login_user(email: str, password: str):
     """Inicia sesión con email y contraseña."""
