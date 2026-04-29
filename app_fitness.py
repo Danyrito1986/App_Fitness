@@ -37,6 +37,7 @@ def main(page: ft.Page):
             return
             
         vistas = [
+            home_view(page, user_actual, show_snackbar),
             profile_view(page, user_actual, show_snackbar),
             workout_view(page, user_actual, show_snackbar),
             diet_view(page, user_actual, show_snackbar),
@@ -48,13 +49,13 @@ def main(page: ft.Page):
     def on_nav_change(e):
         update_view(int(e.control.selected_index))
 
-    # Cambiamos a NavigationRail o Tabs si NavigationBar sigue fallando
-    # Por ahora intentamos NavigationBar con la versión 0.23.2 y strings
+    # Barra de navegación actualizada con 5 destinos
     nav_bar = ft.NavigationBar(
         bgcolor="#1E1E1E",
         selected_index=0,
         on_change=on_nav_change,
         destinations=[
+            ft.NavigationDestination(icon="home", label="Inicio"),
             ft.NavigationDestination(icon="person", label="Perfil"),
             ft.NavigationDestination(icon="fitness_center", label="Entreno"),
             ft.NavigationDestination(icon="restaurant", label="Dieta"),

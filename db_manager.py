@@ -88,32 +88,41 @@ def get_user() -> User:
     return None
 
 def update_user_profile(user_id: int, data: dict) -> bool:
-    """Actualiza los datos biométricos y el objetivo del perfil del usuario."""
+    """Actualiza los datos del perfil de forma dinámica para evitar sobrescribir con valores por defecto."""
     try:
-        # Obtenemos el usuario actual para tener su email (identificador seguro)
         auth_user = supabase.auth.get_user()
         if not auth_user or not auth_user.user:
             return False
             
         email = auth_user.user.email
         
-        # Intentamos actualizar por email o por correo (según la tabla)
+        # Mapeo de nombres de campos del diccionario a nombres de columnas en DB
+        # Esto asegura compatibilidad si los nombres difieren
+        mapping = {
+            "nombre": "nombre",
+            "objetivo": "objetivo",
+            "peso": "peso_actual",
+            "genero": "genero",
+            "altura": "altura",
+            "cuello": "cuello",
+            "cintura": "cintura",
+            "cadera": "cadera",
+            "edad": "edad",
+            "mes_actual": "mes_actual",
+            "entrenos_mes": "entrenos_mes"
+        }
+        
+        update_data = {}
+        for key, value in data.items():
+            if key in mapping:
+                update_data[mapping[key]] = value
+
+        if not update_data:
+            return False
+
         for field in ["email", "correo"]:
             try:
-                res = supabase.table("usuarios").update({
-                    "nombre": data["nombre"], 
-                    "objetivo": data["objetivo"], 
-                    "peso_actual": data["peso"],
-                    "genero": data.get("genero", "Hombre"),
-                    "altura": data.get("altura", 170.0),
-                    "cuello": data.get("cuello", 40.0),
-                    "cintura": data.get("cintura", 85.0),
-                    "cadera": data.get("cadera", 90.0),
-                    "edad": data.get("edad", 25),
-                    "mes_actual": data.get("mes_actual", 1),
-                    "entrenos_mes": data.get("entrenos_mes", 0)
-                }).eq(field, email).execute()
-                
+                res = supabase.table("usuarios").update(update_data).eq(field, email).execute()
                 if res.data:
                     return True
             except:
