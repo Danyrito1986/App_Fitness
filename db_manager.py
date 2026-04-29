@@ -47,27 +47,22 @@ def register_user(email: str, password: str, nombre: str):
     return auth_response
 
 def get_user() -> User:
-    """Obtiene el perfil del usuario actualmente autenticado vinculando Auth con la tabla 'usuarios'."""
+    """Obtiene el perfil del usuario. Si no existe en la tabla 'usuarios', intenta crearlo automáticamente."""
     try:
-        print("DEBUG: Intentando obtener usuario de Auth...")
+        print("DEBUG: Validando sesión de Auth...")
         auth_response = supabase.auth.get_user()
         
         if not auth_response or not auth_response.user:
-            print("DEBUG: No hay sesión activa en Supabase Auth.")
             return None
             
         email = auth_response.user.email
-        print(f"DEBUG: Sesión activa para: {email}")
         
-        # Intentamos buscar por correo o email directamente en Supabase
+        # 1. Intentar buscar perfil existente
         for field in ["email", "correo"]:
             try:
-                print(f"DEBUG: Buscando en tabla 'usuarios' por columna '{field}'...")
                 response = supabase.table("usuarios").select("*").eq(field, email).limit(1).execute()
-                
                 if response.data and len(response.data) > 0:
                     u_data = response.data[0]
-                    print(f"DEBUG: Perfil encontrado para {email}")
                     return User(
                         id=u_data["id"], 
                         nombre=u_data.get("nombre") or "Usuario", 
@@ -86,11 +81,33 @@ def get_user() -> User:
                         mes_actual=int(u_data.get("mes_actual") or 1),
                         entrenos_mes=int(u_data.get("entrenos_mes") or 0)
                     )
-            except Exception as e:
-                print(f"DEBUG: Error buscando en columna '{field}': {e}")
+            except:
                 continue
         
-        print(f"DEBUG: No se encontró ninguna fila en la tabla 'usuarios' vinculada al correo {email}")
+        # 2. Si llegamos aquí, el usuario Auth existe pero NO tiene perfil en la tabla 'usuarios'
+        print(f"DEBUG: Perfil no encontrado para {email}. Intentando auto-creación...")
+        
+        # Intentamos insertar un perfil básico (probando ambas columnas comunes)
+        new_profile = {"nombre": email.split("@")[0], "objetivo": "Aumento de masa muscular", "peso_actual": 0.0}
+        
+        # Intentamos insertar y recuperar el ID
+        try:
+            # Primero probamos con columna 'email'
+            res = supabase.table("usuarios").insert({**new_profile, "email": email}).execute()
+            if not res.data:
+                # Si falla, probamos con 'correo'
+                res = supabase.table("usuarios").insert({**new_profile, "correo": email}).execute()
+            
+            if res.data:
+                u_data = res.data[0]
+                return User(id=u_data["id"], nombre=u_data["nombre"], objetivo=u_data["objetivo"], peso_actual=0.0)
+        except Exception as e:
+            print(f"DEBUG: Error en auto-creación de perfil: {e}")
+            # Como último recurso, si no podemos insertar con email/correo, insertamos solo lo básico
+            res = supabase.table("usuarios").insert(new_profile).execute()
+            if res.data:
+                u_data = res.data[0]
+                return User(id=u_data["id"], nombre=u_data["nombre"], objetivo=u_data["objetivo"], peso_actual=0.0)
 
     except Exception as e:
         print(f"DEBUG: Error crítico en get_user: {e}")
