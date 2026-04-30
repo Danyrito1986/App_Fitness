@@ -1,7 +1,9 @@
 import flet as ft
 import db_manager as db
 
-def login_view(page: ft.Page, on_login_success, show_snackbar):
+from supabase import Client
+
+def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
     # Variables de estado
     is_login_mode = True
 
@@ -33,7 +35,7 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
         try:
             print(f"Intentando login para: {email}")
             if is_login_mode:
-                res = db.login_user(email, password)
+                res = db.login_user(client, email, password)
                 # Verificamos si el objeto tiene el atributo user (compatibilidad supabase-py)
                 user_obj = getattr(res, "user", None)
                 if user_obj:
@@ -45,7 +47,7 @@ def login_view(page: ft.Page, on_login_success, show_snackbar):
                 if not nombre:
                     show_snackbar("El nombre es obligatorio.", True)
                     return
-                res = db.register_user(email, password, nombre)
+                res = db.register_user(client, email, password, nombre)
                 if getattr(res, "user", None):
                     show_snackbar("Registro exitoso. ¡Inicia sesión! 🎉")
                     toggle_mode(None)

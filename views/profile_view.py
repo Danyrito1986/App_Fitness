@@ -2,7 +2,9 @@ import flet as ft
 import db_manager as db
 from models import User
 
-def profile_view(page: ft.Page, user: User, show_snackbar):
+from supabase import Client
+
+def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de perfil avanzada con cálculos de grasa y masa muscular."""
     
     # --- CAMPOS DE ENTRADA ---
@@ -99,7 +101,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
 
     def guardar_perfil(e):
         try:
-            success = db.update_user_profile(user.id, {
+            success = db.update_user_profile(client, user.id, {
                 'nombre': txt_nombre.value,
                 'objetivo': dd_objetivo.value,
                 'nivel': dd_nivel.value,
@@ -132,7 +134,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
                 user.muslo = float(txt_muslo.value)
                 user.edad = int(txt_edad.value)
                 
-                db.log_weight(user.id, user.peso_actual)
+                db.log_weight(client, user.id, user.peso_actual)
                 show_snackbar("¡Perfil y medidas actualizados con éxito! ✨", False)
                 calcular_en_vivo()
             else:
@@ -178,5 +180,6 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
             on_click=guardar_perfil,
             style=ft.ButtonStyle(color="black", bgcolor="#FFD700"),
             width=350, height=50
-        )
+        ),
+        ft.Container(height=20)
     ], expand=True, horizontal_alignment="center", scroll="adaptive")

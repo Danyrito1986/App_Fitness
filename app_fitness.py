@@ -17,6 +17,9 @@ def main(page: ft.Page):
     page.window_width = 420
     page.window_height = 800
 
+    # CLIENTE DE SUPABASE POR SESIÓN (Evita fuga de perfiles)
+    client = db.get_supabase_client()
+
     # --- SISTEMA DE NOTIFICACIONES ---
     def show_snackbar(message: str, is_error: bool = False):
         page.snack_bar = ft.SnackBar(
@@ -32,16 +35,24 @@ def main(page: ft.Page):
     container_principal = ft.Container(expand=True, padding=15, bgcolor="#121212")
     user_actual = None
 
+    def logout_handler():
+        nonlocal user_actual
+        db.logout_user(client)
+        user_actual = None
+        nav_bar.visible = False
+        container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
+        page.update()
+
     def update_view(index):
         if not user_actual:
             return
             
         vistas = [
-            home_view(page, user_actual, show_snackbar),
-            profile_view(page, user_actual, show_snackbar),
-            workout_view(page, user_actual, show_snackbar),
-            diet_view(page, user_actual, show_snackbar),
-            progress_view(page, user_actual, show_snackbar),
+            home_view(page, client, user_actual, show_snackbar, logout_handler),
+            profile_view(page, client, user_actual, show_snackbar),
+            workout_view(page, client, user_actual, show_snackbar),
+            diet_view(page, client, user_actual, show_snackbar),
+            progress_view(page, client, user_actual, show_snackbar),
         ]
         container_principal.content = vistas[index]
         page.update()
@@ -68,25 +79,26 @@ def main(page: ft.Page):
     def show_main_app():
         nonlocal user_actual
         try:
-            user_actual = db.get_user()
+            user_actual = db.get_user(client)
             if user_actual:
                 nav_bar.visible = True
+                nav_bar.selected_index = 0
                 update_view(0)
             else:
-                page.add(ft.Text("Error al cargar perfil.", color="red"))
+                show_snackbar("Error al cargar perfil.", True)
         except Exception as e:
             show_snackbar(f"Error: {e}", True)
         page.update()
 
     # FLUJO INICIAL
-    session_user = db.get_user()
+    session_user = db.get_user(client)
     if session_user:
         user_actual = session_user
         nav_bar.visible = True
         update_view(0)
         page.add(container_principal)
     else:
-        container_principal.content = login_view(page, on_login_success=show_main_app, show_snackbar=show_snackbar)
+        container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
         page.add(container_principal)
 
 if __name__ == "__main__":

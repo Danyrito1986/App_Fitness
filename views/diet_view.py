@@ -1,7 +1,9 @@
 import flet as ft
 from models import User
 
-def diet_view(page: ft.Page, user: User, show_snackbar):
+from supabase import Client
+
+def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de nutrición de precisión con desglose de alimentos y cantidades."""
     
     macros = user.get_macros()

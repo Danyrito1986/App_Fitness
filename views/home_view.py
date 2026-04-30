@@ -2,12 +2,14 @@ import flet as ft
 import db_manager as db
 from models import User
 
-def home_view(page: ft.Page, user: User, show_snackbar):
+from supabase import Client
+
+def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_handler):
     """Vista de Dashboard principal."""
     macros = user.get_macros()
-    stats = db.get_workout_stats(user.id)
-    agua_hoy = db.get_daily_water(user.id)
-    
+    stats = db.get_workout_stats(client, user.id)
+    agua_hoy = db.get_daily_water(client, user.id)
+
     # --- LÓGICA DE HIDRATACIÓN DINÁMICA ---
     # Meta: 35ml por kg de peso
     meta_litros = round(user.peso_actual * 0.035, 2)
@@ -19,17 +21,17 @@ def home_view(page: ft.Page, user: User, show_snackbar):
         size=20, weight="bold", color="#42A5F5"
     )
     lbl_detalle_agua = ft.Text(f"Meta: {meta_litros}L | Vasos: {agua_hoy}", size=12, color="white54")
-    
+
     def sumar_agua(e):
-        if db.log_water(user.id, 1):
+        if db.log_water(client, user.id, 1):
             nonlocal agua_hoy, consumo_actual_l, restante_l
             agua_hoy += 1
             consumo_actual_l = round(agua_hoy * 0.25, 2)
             restante_l = max(0, round(meta_litros - consumo_actual_l, 2))
-            
+
             lbl_restante.value = f"Faltan: {restante_l} L" if restante_l > 0 else "¡Meta alcanzada! 🎯"
             lbl_detalle_agua.value = f"Meta: {meta_litros}L | Vasos: {agua_hoy}"
-            
+
             if restante_l <= 0:
                 show_snackbar("¡FELICIDADES! Meta de hidratación cumplida 🎯💦", False)
             else:
@@ -80,6 +82,13 @@ def home_view(page: ft.Page, user: User, show_snackbar):
         ft.Row([card_calorias], spacing=15),
         ft.Container(height=10),
         ft.Row([widget_agua], spacing=15, alignment="center"),
+        ft.Container(height=10),
+        ft.TextButton(
+            "CERRAR SESIÓN", 
+            icon="logout", 
+            on_click=lambda _: logout_handler(),
+            style=ft.ButtonStyle(color="red400")
+        ),
         ft.Container(height=20),
         ft.Text("¿Listo para el siguiente nivel?", size=14, color="white38")
     ], scroll="auto", horizontal_alignment="center")

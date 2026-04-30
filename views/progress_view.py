@@ -2,9 +2,11 @@ import flet as ft
 import db_manager as db
 from models import User
 
-def progress_view(page: ft.Page, user: User, show_snackbar):
+from supabase import Client
+
+def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de progreso con historial."""
-    history = db.get_weight_history(user.id)
+    history = db.get_weight_history(client, user.id)
     
     return ft.Column([
         ft.Text("MI EVOLUCIÓN", size=24, weight="bold", color="#FFD700"),

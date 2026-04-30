@@ -4,8 +4,10 @@ import time
 import threading
 from models import User, Exercise
 
-def workout_view(page: ft.Page, user: User, show_snackbar):
-    """Vista de entrenamiento dinámica controlada desde Supabase (Igual que la app de Barbería)."""
+from supabase import Client
+
+def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
+    """Vista de entrenamiento dinámica controlada desde Supabase."""
     
     # --- ESTADO ---
     mes_seleccionado = user.mes_actual
@@ -17,7 +19,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
     lbl_progreso = ft.Text(f"Progreso Mes {user.mes_actual}: {user.entrenos_mes}/20 entrenos", size=12, color="white54")
 
     def registrar_entreno(e):
-        if db.log_workout(user.id, f"Mes {user.mes_actual} - DIA-{dia_seleccionado}"):
+        if db.log_workout(client, user.id, f"Mes {user.mes_actual} - DIA-{dia_seleccionado}"):
             user.entrenos_mes += 1
             
             # Verificar si completó el mes
@@ -30,7 +32,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
                 show_snackbar("¡Entrenamiento registrado! 💪", False)
             
             # Guardar en DB
-            db.update_user_profile(user.id, {
+            db.update_user_profile(client, user.id, {
                 "nombre": user.nombre, "objetivo": user.objetivo, "peso": user.peso_actual,
                 "mes_actual": user.mes_actual, "entrenos_mes": user.entrenos_mes,
                 "genero": user.genero, "altura": user.altura, "cuello": user.cuello, 
@@ -61,8 +63,9 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         nonlocal dia_seleccionado
         if dia: dia_seleccionado = dia
         
-        # LLAMADA DINÁMICA A SUPABASE (Patrón Barbería)
+        # LLAMADA DINÁMICA A SUPABASE
         exs = db.get_dynamic_exercises(
+            client,
             user.genero, 
             nivel_seleccionado, 
             mes_seleccionado, 
@@ -82,7 +85,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         else:
             for ex in exs:
                 # Obtener último peso para sugerencia
-                last_w = db.get_last_weight(user.id, ex.nombre)
+                last_w = db.get_last_weight(client, user.id, ex.nombre)
                 sugerencia = f"{last_w + 2.5}kg" if last_w > 0 else "Inicia con peso moderado"
                 info_anterior = f"Anterior: {last_w}kg" if last_w > 0 else "Sin registros"
 
@@ -98,7 +101,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
                 def guardar_peso_ex(e, nombre_ex=ex.nombre, field=txt_peso_hoy):
                     try:
                         peso = float(field.value)
-                        if db.log_pr(user.id, nombre_ex, peso):
+                        if db.log_pr(client, user.id, nombre_ex, peso):
                             show_snackbar(f"¡Peso guardado para {nombre_ex}! 💪", False)
                             update_workout_list() # Refrescar para ver nueva sugerencia
                         else:
