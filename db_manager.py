@@ -121,6 +121,10 @@ def update_user_profile(user_id: int, data: dict) -> bool:
             "cuello": "cuello",
             "cintura": "cintura",
             "cadera": "cadera",
+            "pecho": "pecho",
+            "gluteo": "gluteo",
+            "bicep": "bicep",
+            "muslo": "muslo",
             "edad": "edad",
             "mes_actual": "mes_actual",
             "entrenos_mes": "entrenos_mes"

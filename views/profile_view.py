@@ -48,6 +48,12 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
     txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
     txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=110, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo())
 
+    # Medidas Adicionales de Control
+    txt_bicep = ft.TextField(label="Bíceps (cm)", value=str(user.bicep), width=110, border_color="#2196F3")
+    txt_pecho = ft.TextField(label="Pecho (cm)", value=str(user.pecho), width=110, border_color="#2196F3")
+    txt_gluteo = ft.TextField(label="Glúteo (cm)", value=str(user.gluteo), width=110, border_color="#2196F3")
+    txt_muslo = ft.TextField(label="Muslo (cm)", value=str(user.muslo), width=110, border_color="#2196F3")
+
     # --- PANEL DE RESULTADOS ---
     lbl_tdee = ft.Text("Mantenimiento: -- kcal", size=14, color="white54")
     lbl_ajuste = ft.Text("Ajuste: -- kcal", size=14, weight="bold")
@@ -103,6 +109,10 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
                 'cuello': float(txt_cuello.value),
                 'cintura': float(txt_cintura.value),
                 'cadera': float(txt_cadera.value),
+                'pecho': float(txt_pecho.value),
+                'gluteo': float(txt_gluteo.value),
+                'bicep': float(txt_bicep.value),
+                'muslo': float(txt_muslo.value),
                 'edad': int(txt_edad.value)
             })
             if success:
@@ -116,6 +126,10 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
                 user.cuello = float(txt_cuello.value)
                 user.cintura = float(txt_cintura.value)
                 user.cadera = float(txt_cadera.value)
+                user.pecho = float(txt_pecho.value)
+                user.gluteo = float(txt_gluteo.value)
+                user.bicep = float(txt_bicep.value)
+                user.muslo = float(txt_muslo.value)
                 user.edad = int(txt_edad.value)
                 
                 db.log_weight(user.id, user.peso_actual)
@@ -140,6 +154,10 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
         ft.Divider(height=20, color="white12"),
         ft.Text("Medidas para Grasa Corporal (Marina)", size=14, weight="bold"),
         ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", spacing=10, wrap=True),
+        
+        ft.Divider(height=20, color="white12"),
+        ft.Text("Control de Volumen Muscular", size=14, weight="bold", color="#2196F3"),
+        ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", spacing=10, wrap=True),
         
         ft.Container(
             content=ft.Column([
