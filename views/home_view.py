@@ -18,10 +18,21 @@ def home_view(page: ft.Page, user: User, show_snackbar):
             show_snackbar("¡Vaso registrado! 💧")
             page.update()
 
+    # --- LÓGICA DE DÍA ACTUAL ---
+    dia_actual = (user.entrenos_mes % 5) + 1
+    musculos_map = {
+        1: "Pecho, Hombro Frontal y Tríceps 💪",
+        2: "Espalda, Bíceps y Posterior 🦅",
+        3: "Cuádriceps, Glúteos y Pantorrilla 🍗",
+        4: "Hombro Lateral, Trapecio y Abdomen 🛡️",
+        5: "Isquiosurales, Glúteos y Brazos 🔥"
+    }
+    mensaje_musculos = f"Músculos de hoy: {musculos_map.get(dia_actual, '¡A darle con todo!')}"
+
     header = ft.Container(
         content=ft.Column([
             ft.Text(f"¡Hola, {user.nombre}!", size=32, weight="bold", color="#FFD700"),
-            ft.Text("Hoy es un gran día para entrenar", size=16, color="white70"),
+            ft.Text(mensaje_musculos, size=16, color="white70"),
         ])
     )
 
