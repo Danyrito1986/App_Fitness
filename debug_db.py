@@ -46,5 +46,14 @@ def check_duplicates():
     except Exception as e:
         print(f"Error al consultar: {e}")
 
+def check_records_table():
+    print("\n--- Verificando Tabla 'records_fuerza' ---")
+    try:
+        res = supabase.table("records_fuerza").select("*").limit(1).execute()
+        print(f"¡Tabla encontrada! Columnas: {list(res.data[0].keys()) if res.data else 'Sin datos aún (pero la tabla existe)'}")
+    except Exception as e:
+        print(f"ALERTA: La tabla 'records_fuerza' no parece existir o no es accesible: {e}")
+
 if __name__ == "__main__":
     check_duplicates()
+    check_records_table()

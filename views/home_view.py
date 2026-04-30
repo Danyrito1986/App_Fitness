@@ -8,14 +8,32 @@ def home_view(page: ft.Page, user: User, show_snackbar):
     stats = db.get_workout_stats(user.id)
     agua_hoy = db.get_daily_water(user.id)
     
-    lbl_agua = ft.Text(f"{agua_hoy} vasos", size=20, weight="bold")
+    # --- LÓGICA DE HIDRATACIÓN DINÁMICA ---
+    # Meta: 35ml por kg de peso
+    meta_litros = round(user.peso_actual * 0.035, 2)
+    consumo_actual_l = round(agua_hoy * 0.25, 2) # Cada vaso son 250ml
+    restante_l = max(0, round(meta_litros - consumo_actual_l, 2))
+
+    lbl_restante = ft.Text(
+        f"Faltan: {restante_l} L" if restante_l > 0 else "¡Meta alcanzada! 🎯", 
+        size=20, weight="bold", color="#42A5F5"
+    )
+    lbl_detalle_agua = ft.Text(f"Meta: {meta_litros}L | Vasos: {agua_hoy}", size=12, color="white54")
     
     def sumar_agua(e):
         if db.log_water(user.id, 1):
-            nonlocal agua_hoy
+            nonlocal agua_hoy, consumo_actual_l, restante_l
             agua_hoy += 1
-            lbl_agua.value = f"{agua_hoy} vasos"
-            show_snackbar("¡Vaso registrado! 💧")
+            consumo_actual_l = round(agua_hoy * 0.25, 2)
+            restante_l = max(0, round(meta_litros - consumo_actual_l, 2))
+            
+            lbl_restante.value = f"Faltan: {restante_l} L" if restante_l > 0 else "¡Meta alcanzada! 🎯"
+            lbl_detalle_agua.value = f"Meta: {meta_litros}L | Vasos: {agua_hoy}"
+            
+            if restante_l <= 0:
+                show_snackbar("¡FELICIDADES! Meta de hidratación cumplida 🎯💦", False)
+            else:
+                show_snackbar("¡Vaso registrado! 💧", False)
             page.update()
 
     # --- LÓGICA DE DÍA ACTUAL ---
@@ -50,10 +68,11 @@ def home_view(page: ft.Page, user: User, show_snackbar):
                 ft.Icon("water_drop", color="#42A5F5"),
                 ft.Text("Hidratación", weight="bold"),
             ], alignment="center"),
-            lbl_agua,
+            lbl_restante,
+            lbl_detalle_agua,
             ft.IconButton("add_circle", icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
-        ], horizontal_alignment="center"),
-        padding=15, bgcolor="#1E1E1E", border_radius=20, width=170
+        ], horizontal_alignment="center", spacing=5),
+        padding=15, bgcolor="#1E1E1E", border_radius=20, width=220
     )
 
     return ft.Column([
