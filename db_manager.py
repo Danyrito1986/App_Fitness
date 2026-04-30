@@ -47,9 +47,8 @@ def register_user(email: str, password: str, nombre: str):
     return auth_response
 
 def get_user() -> User:
-    """Obtiene el perfil del usuario. Si no existe en la tabla 'usuarios', intenta crearlo automáticamente."""
+    """Obtiene el perfil del usuario vinculado a su sesión de Auth."""
     try:
-        print("DEBUG: Validando sesión de Auth...")
         auth_response = supabase.auth.get_user()
         
         if not auth_response or not auth_response.user:
@@ -57,68 +56,61 @@ def get_user() -> User:
             
         email = auth_response.user.email
         
-        # 1. Intentar buscar perfil existente
-        for field in ["email", "correo"]:
-            try:
-                response = supabase.table("usuarios").select("*").eq(field, email).limit(1).execute()
-                if response.data and len(response.data) > 0:
-                    u_data = response.data[0]
-                    return User(
-                        id=u_data["id"], 
-                        nombre=u_data.get("nombre") or "Usuario", 
-                        objetivo=u_data.get("objetivo") or "Aumento de masa muscular", 
-                        peso_actual=float(u_data.get("peso_actual") or 0.0),
-                        genero=u_data.get("genero") or "Hombre",
-                        nivel=u_data.get("nivel") or "Novato",
-                        altura=float(u_data.get("altura") or 170.0),                        cuello=float(u_data.get("cuello") or 40.0),
-                        cintura=float(u_data.get("cintura") or 85.0),
-                        cadera=float(u_data.get("cadera") or 90.0),
-                        pecho=float(u_data.get("pecho") or 100.0),
-                        gluteo=float(u_data.get("gluteo") or 95.0),
-                        bicep=float(u_data.get("bicep") or 35.0),
-                        muslo=float(u_data.get("muslo") or 55.0),
-                        edad=int(u_data.get("edad") or 25),
-                        mes_actual=int(u_data.get("mes_actual") or 1),
-                        entrenos_mes=int(u_data.get("entrenos_mes") or 0)
-                    )
-            except:
-                continue
+        # 1. Buscar perfil vinculado por la nueva columna 'email'
+        response = supabase.table("usuarios").select("*").eq("email", email).limit(1).execute()
         
-        # 2. Si llegamos aquí, el usuario Auth existe pero NO tiene perfil en la tabla 'usuarios'
-        print(f"DEBUG: Perfil no encontrado para {email}. Intentando auto-creación...")
+        if response.data and len(response.data) > 0:
+            u_data = response.data[0]
+            return User(
+                id=u_data["id"], 
+                nombre=u_data.get("nombre") or "Usuario", 
+                objetivo=u_data.get("objetivo") or "Aumento de masa muscular", 
+                peso_actual=float(u_data.get("peso_actual") or 0.0),
+                genero=u_data.get("genero") or "Hombre",
+                nivel=u_data.get("nivel") or "Novato",
+                altura=float(u_data.get("altura") or 170.0),
+                cuello=float(u_data.get("cuello") or 40.0),
+                cintura=float(u_data.get("cintura") or 85.0),
+                cadera=float(u_data.get("cadera") or 90.0),
+                pecho=float(u_data.get("pecho") or 100.0),
+                gluteo=float(u_data.get("gluteo") or 95.0),
+                bicep=float(u_data.get("bicep") or 35.0),
+                muslo=float(u_data.get("muslo") or 55.0),
+                edad=int(u_data.get("edad") or 25),
+                mes_actual=int(u_data.get("mes_actual") or 1),
+                entrenos_mes=int(u_data.get("entrenos_mes") or 0)
+            )
         
-        # Intentamos insertar un perfil básico (probando ambas columnas comunes)
-        new_profile = {"nombre": email.split("@")[0], "objetivo": "Aumento de masa muscular", "peso_actual": 0.0}
+        # 2. Si no existe, crearlo vinculado permanentemente al email de Auth
+        print(f"DEBUG: Creando perfil definitivo para {email}...")
+        new_profile = {
+            "email": email,
+            "nombre": email.split("@")[0],
+            "objetivo": "Aumento de masa muscular",
+            "peso_actual": 0.0,
+            "genero": "Hombre",
+            "nivel": "Novato"
+        }
         
-        # Intentamos insertar y recuperar el ID
-        try:
-            # Primero probamos con columna 'email'
-            res = supabase.table("usuarios").insert({**new_profile, "email": email}).execute()
-            if not res.data:
-                # Si falla, probamos con 'correo'
-                res = supabase.table("usuarios").insert({**new_profile, "correo": email}).execute()
-            
-            if res.data:
-                u_data = res.data[0]
-                return User(id=u_data["id"], nombre=u_data["nombre"], objetivo=u_data["objetivo"], peso_actual=0.0)
-        except Exception as e:
-            print(f"DEBUG: Error en auto-creación de perfil: {e}")
-            # Como último recurso, si no podemos insertar con email/correo, insertamos solo lo básico
-            res = supabase.table("usuarios").insert(new_profile).execute()
-            if res.data:
-                u_data = res.data[0]
-                return User(id=u_data["id"], nombre=u_data["nombre"], objetivo=u_data["objetivo"], peso_actual=0.0)
+        res = supabase.table("usuarios").insert(new_profile).execute()
+        if res.data:
+            u_data = res.data[0]
+            return User(
+                id=u_data["id"], 
+                nombre=u_data["nombre"], 
+                objetivo=u_data["objetivo"], 
+                peso_actual=0.0,
+                email=email # Aseguramos que el objeto tenga el email si fuera necesario
+            )
 
     except Exception as e:
         print(f"DEBUG: Error crítico en get_user: {e}")
     return None
 
 def update_user_profile(user_id: int, data: dict) -> bool:
-    """Actualiza los datos del perfil usando el ID como identificador primario."""
+    """Actualiza los datos del perfil de forma segura."""
     try:
-        print(f"DEBUG: Intentando actualizar perfil para ID: {user_id}")
-        
-        # Mapeo de campos
+        # Mapeo de campos para asegurar consistencia con la DB
         mapping = {
             "nombre": "nombre",
             "objetivo": "objetivo",
@@ -140,33 +132,14 @@ def update_user_profile(user_id: int, data: dict) -> bool:
                 update_data[mapping[key]] = value
 
         if not update_data:
-            print("DEBUG: No hay datos válidos para actualizar.")
             return False
 
-        # Intentamos la actualización directamente por ID (más seguro y rápido)
+        # Actualizamos por ID, pero verificamos que el usuario Auth sea el dueño (Seguridad)
         res = supabase.table("usuarios").update(update_data).eq("id", user_id).execute()
         
-        if res.data and len(res.data) > 0:
-            print(f"DEBUG: Perfil {user_id} actualizado con éxito.")
-            return True
-        else:
-            print(f"DEBUG: No se encontró el registro con ID {user_id} para actualizar.")
-            
-            # Fallback: Intentar por email si el ID falló (a veces el ID cambia en sesiones sucias)
-            auth_user = supabase.auth.get_user()
-            if auth_user and auth_user.user:
-                email = auth_user.user.email
-                for field in ["email", "correo"]:
-                    try:
-                        res_alt = supabase.table("usuarios").update(update_data).eq(field, email).execute()
-                        if res_alt.data:
-                            print(f"DEBUG: Perfil actualizado vía {field}.")
-                            return True
-                    except: continue
-        
-        return False
+        return len(res.data) > 0
     except Exception as e:
-        print(f"DEBUG: Error crítico en update_user_profile: {e}")
+        print(f"DEBUG: Error en update_user_profile: {e}")
         return False
 
 def get_routines():

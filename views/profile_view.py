@@ -7,9 +7,9 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
     
     # --- CAMPOS DE ENTRADA ---
     txt_nombre = ft.TextField(label="Nombre", value=user.nombre, width=350, border_color="#FFD700")
-    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=110, border_color="#FFD700")
-    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=110, border_color="#FFD700")
-    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=110, border_color="#FFD700")
+    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
     
     dd_genero = ft.Dropdown(
         label="Género",
@@ -27,7 +27,8 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
             ft.dropdown.Option("Intermedio"),
             ft.dropdown.Option("Pro")
         ],
-        width=350, border_color="#FFD700"
+        width=350, border_color="#FFD700",
+        on_change=lambda _: calcular_en_vivo()
     )
 
     dd_objetivo = ft.Dropdown(
@@ -38,13 +39,14 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
             ft.dropdown.Option("Definición / Quema de Grasa"),
             ft.dropdown.Option("Resistencia"),
         ],
-        width=350, border_color="#FFD700"
+        width=350, border_color="#FFD700",
+        on_change=lambda _: calcular_en_vivo()
     )
     
     # Medidas para Grasa Corporal
-    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=110, border_color="#FFD700")
-    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=110, border_color="#FFD700")
-    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=110, border_color="#FFD700", visible=(user.genero == "Mujer"))
+    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=110, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo())
 
     # --- PANEL DE RESULTADOS ---
     lbl_tdee = ft.Text("Mantenimiento: -- kcal", size=14, color="white54")
@@ -82,7 +84,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
             lbl_bf.value = f"Grasa Corporal: {res['bf']}%"
             lbl_masa_magra.value = f"Masa Muscular: {res['masa_magra']} kg"
         except Exception as e:
-            print(f"Error en cálculo: {e}")
+            pass # Silenciamos errores parciales durante el tipeo
         page.update()
 
     def actualizar_ui():
@@ -117,7 +119,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
                 user.edad = int(txt_edad.value)
                 
                 db.log_weight(user.id, user.peso_actual)
-                show_snackbar("¡Perfil y medidas actualizados con éxito! ✨")
+                show_snackbar("¡Perfil y medidas actualizados con éxito! ✨", False)
                 calcular_en_vivo()
             else:
                 show_snackbar("No se pudo guardar. Verifica tu conexión.", True)
@@ -133,11 +135,11 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
         dd_genero,
         dd_nivel,
         dd_objetivo,
-        ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", spacing=10),
+        ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", spacing=10, wrap=True),
         
         ft.Divider(height=20, color="white12"),
         ft.Text("Medidas para Grasa Corporal (Marina)", size=14, weight="bold"),
-        ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", spacing=10),
+        ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", spacing=10, wrap=True),
         
         ft.Container(
             content=ft.Column([

@@ -48,6 +48,65 @@ def diet_view(page: ft.Page, user: User, show_snackbar):
             )
         )
 
+    def card_suplementacion():
+        """Genera la tarjeta de suplementación inteligente basada en peso y objetivo."""
+        suplementos = []
+        
+        # 1. Creatina (0.1g por kg)
+        dosis_creatina = round(user.peso_actual * 0.1, 1)
+        if dosis_creatina < 5: dosis_creatina = 5.0
+        suplementos.append(("Creatina Monohidratada", f"{dosis_creatina}g diarios (Mantenimiento)", "science"))
+        
+        # 2. Proteína (Whey/Isolate)
+        if p > 120:
+            suplementos.append(("Proteína Whey/Isolate", "1-2 scoops (25-50g) post-entreno o snack", "local_drink"))
+        else:
+            suplementos.append(("Proteína Whey/Isolate", "1 scoop (25g) post-entrenamiento", "local_drink"))
+            
+        # 3. Específicos por Objetivo
+        if user.objetivo == "Aumento de masa muscular":
+            suplementos.append(("Multivitamínico", "1 cápsula con el desayuno", "medication"))
+            if cal > 3000:
+                suplementos.append(("Gainer / Carbohidratos", "Opcional si no llegas a las calorías", "add_chart"))
+        elif user.objetivo == "Definición / Quema de Grasa":
+            suplementos.append(("Cafeína / Té Verde", "200mg como pre-entreno natural", "bolt"))
+            suplementos.append(("Omega 3 (Aceite de Pescado)", "2-3g diarios para salud metabólica", "water_drop"))
+        elif user.objetivo == "Resistencia":
+            suplementos.append(("Electrolitos", "Durante el entrenamiento (Intra-workout)", "Electric_bolt"))
+            suplementos.append(("Magnesio", "400mg antes de dormir (Recuperación)", "nightlight_round"))
+        
+        # Renderizado de items
+        items_ui = []
+        for nombre, dosis, icono in suplementos:
+            items_ui.append(
+                ft.Row([
+                    ft.Icon(icono, color="#FFD700", size=20),
+                    ft.Column([
+                        ft.Text(nombre, weight="bold", size=14),
+                        ft.Text(dosis, size=12, color="white54")
+                    ], spacing=2)
+                ], alignment="start")
+            )
+
+        return ft.Card(
+            content=ft.Container(
+                content=ft.Column([
+                    ft.ListTile(
+                        leading=ft.Icon("auto_awesome", color="#FFD700"),
+                        title=ft.Text("SUPLEMENTACIÓN INTELIGENTE", weight="bold", size=18),
+                        subtitle=ft.Text("Dosis personalizadas para tu objetivo", color="white54", size=12),
+                    ),
+                    ft.Container(
+                        content=ft.Column(items_ui, spacing=15),
+                        padding=ft.padding.only(left=20, right=20, bottom=25)
+                    )
+                ]),
+                bgcolor="#1E1E1E",
+                border_radius=15,
+                border=ft.border.all(1, "#FFD70033") # Borde sutil dorado
+            )
+        )
+
     return ft.Column([
         ft.Text("TU PLAN NUTRICIONAL", size=24, weight="bold", color="#FFD700"),
         
@@ -68,6 +127,10 @@ def diet_view(page: ft.Page, user: User, show_snackbar):
         card_comida_detallada("Desayuno", 0.30, "brunch_dining"),
         card_comida_detallada("Almuerzo", 0.40, "lunch_dining"),
         card_comida_detallada("Cena", 0.30, "dinner_dining"),
+
+        ft.Divider(height=20, color="white12"),
+        ft.Text("RECOMENDACIÓN TÉCNICA", size=12, color="white38", weight="bold"),
+        card_suplementacion(),
 
         ft.Container(height=20),
         ft.Text("* Las medidas son en alimentos ya cocidos.", size=10, color="white24", italic=True)

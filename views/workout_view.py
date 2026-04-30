@@ -25,6 +25,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
                 user.mes_actual += 1
                 user.entrenos_mes = 0
                 show_snackbar(f"¡FELICIDADES! 🎉 Has desbloqueado el Mes {user.mes_actual}", False)
+                actualizar_ui_meses() # Refrescar botones de meses
             else:
                 show_snackbar("¡Entrenamiento registrado! 💪", False)
             
@@ -95,7 +96,9 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
                 )
         page.update()
 
-    # --- SELECTOR DE MESES (Con Bloqueo) ---
+    # --- SELECTOR DE MESES (Con Bloqueo y Refresco) ---
+    row_meses = ft.Row(scroll="auto", spacing=10, wrap=True, alignment="center")
+
     def crear_btn_mes(n):
         bloqueado = n > user.mes_actual
         return ft.ElevatedButton(
@@ -105,8 +108,12 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
                 color="black" if not bloqueado else "white38",
                 bgcolor="#FFD700" if not bloqueado else "#333333"
             ),
-            width=100
+            width=110
         )
+
+    def actualizar_ui_meses():
+        row_meses.controls = [crear_btn_mes(i) for i in range(1, 7)]
+        page.update()
 
     def set_mes(n):
         nonlocal mes_seleccionado
@@ -114,6 +121,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         update_workout_list()
 
     # --- UI LAYOUT ---
+    actualizar_ui_meses()
     update_workout_list()
 
     return ft.Column([
@@ -124,8 +132,8 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         nivel_selector,
         ft.Divider(height=10, color="transparent"),
 
-        # Selector de Meses (Scroll Horizontal)
-        ft.Row([crear_btn_mes(i) for i in range(1, 7)], scroll="auto", spacing=10),
+        # Selector de Meses
+        row_meses,
         
         ft.Divider(height=10, color="white12"),
         
@@ -133,7 +141,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
         ft.Row([
             ft.TextButton(f"DIA-{i}", on_click=lambda e, idx=i: update_workout_list(idx))
             for i in range(1, 6)
-        ], alignment="center"),
+        ], alignment="center", wrap=True),
         
         ft.Text(f"RUTINA ACTUAL: MES {mes_seleccionado} - DIA {dia_seleccionado}", size=14, weight="bold", color="white70"),
         
