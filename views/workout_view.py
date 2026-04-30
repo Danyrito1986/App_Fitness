@@ -10,7 +10,7 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
     # --- ESTADO ---
     mes_seleccionado = user.mes_actual
     dia_seleccionado = 1
-    nivel_seleccionado = "Novato" # Default
+    nivel_seleccionado = user.nivel
     
     lista_ejercicios = ft.Column(spacing=10)
     progreso_barra = ft.ProgressBar(value=user.entrenos_mes/20, width=300, color="#FFD700", bgcolor="#333333")

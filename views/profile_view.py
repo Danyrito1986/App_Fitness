@@ -36,7 +36,7 @@ def profile_view(page: ft.Page, user: User, show_snackbar):
         options=[
             ft.dropdown.Option("Aumento de masa muscular"),
             ft.dropdown.Option("Definición / Quema de Grasa"),
-            ft.dropdown.Option("Mantenimiento"),
+            ft.dropdown.Option("Resistencia"),
         ],
         width=350, border_color="#FFD700"
     )
