@@ -81,17 +81,58 @@ def workout_view(page: ft.Page, user: User, show_snackbar):
             )
         else:
             for ex in exs:
+                # Obtener último peso para sugerencia
+                last_w = db.get_last_weight(user.id, ex.nombre)
+                sugerencia = f"{last_w + 2.5}kg" if last_w > 0 else "Inicia con peso moderado"
+                info_anterior = f"Anterior: {last_w}kg" if last_w > 0 else "Sin registros"
+
+                txt_peso_hoy = ft.TextField(
+                    label="Kg hoy",
+                    width=80,
+                    height=40,
+                    text_size=12,
+                    border_color="#FFD700",
+                    keyboard_type=ft.KeyboardType.NUMBER
+                )
+
+                def guardar_peso_ex(e, nombre_ex=ex.nombre, field=txt_peso_hoy):
+                    try:
+                        peso = float(field.value)
+                        if db.log_pr(user.id, nombre_ex, peso):
+                            show_snackbar(f"¡Peso guardado para {nombre_ex}! 💪", False)
+                            update_workout_list() # Refrescar para ver nueva sugerencia
+                        else:
+                            show_snackbar("Error al guardar peso.", True)
+                    except:
+                        show_snackbar("Ingresa un número válido.", True)
+
                 lista_ejercicios.controls.append(
                     ft.Container(
-                        content=ft.Row([
-                            ft.Checkbox(fill_color="#FFD700"),
-                            ft.Column([
-                                ft.Text(ex.nombre, weight="bold", size=16),
-                                ft.Text(f"{ex.series} series x {ex.reps} reps", size=12, color="white54")
-                            ], expand=True),
-                            ft.IconButton("timer_outlined", icon_color="#FFD700")
-                        ]),
-                        padding=10, bgcolor="#1E1E1E", border_radius=10
+                        content=ft.Column([
+                            ft.Row([
+                                ft.Checkbox(fill_color="#FFD700"),
+                                ft.Column([
+                                    ft.Text(ex.nombre, weight="bold", size=16),
+                                    ft.Text(f"{ex.series} series x {ex.reps} reps", size=12, color="white54")
+                                ], expand=True),
+                                ft.IconButton("timer_outlined", icon_color="#FFD700")
+                            ]),
+                            ft.Divider(height=1, color="white10"),
+                            ft.Row([
+                                ft.Column([
+                                    ft.Text(info_anterior, size=10, color="white38"),
+                                    ft.Text(f"Sugerencia: {sugerencia}", size=11, color="#FFD700", weight="bold"),
+                                ], expand=True),
+                                txt_peso_hoy,
+                                ft.IconButton(
+                                    icon="save", 
+                                    icon_color="#4CAF50", 
+                                    tooltip="Guardar peso de hoy",
+                                    on_click=guardar_peso_ex
+                                )
+                            ], alignment="center")
+                        ], spacing=10),
+                        padding=12, bgcolor="#1E1E1E", border_radius=10
                     )
                 )
         page.update()

@@ -294,3 +294,21 @@ def get_prs(user_id: int):
         return [PRLog(usuario_id=r["usuario_id"], ejercicio_nombre=r["ejercicio_nombre"], peso=r["peso"], fecha=r["fecha"]) for r in response.data]
     except:
         return []
+
+def get_last_weight(user_id: int, exercise_name: str) -> float:
+    """Obtiene el peso más reciente registrado para un ejercicio específico."""
+    try:
+        response = supabase.table("records_fuerza")\
+            .select("peso")\
+            .eq("usuario_id", user_id)\
+            .eq("ejercicio_nombre", exercise_name)\
+            .order("fecha", desc=True)\
+            .limit(1)\
+            .execute()
+        
+        if response.data:
+            return float(response.data[0]["peso"])
+        return 0.0
+    except Exception as e:
+        print(f"Error en get_last_weight: {e}")
+        return 0.0
