@@ -47,14 +47,20 @@ def main(page: ft.Page):
         if not user_actual:
             return
             
-        vistas = [
-            home_view(page, client, user_actual, show_snackbar, logout_handler),
-            profile_view(page, client, user_actual, show_snackbar),
-            workout_view(page, client, user_actual, show_snackbar),
-            diet_view(page, client, user_actual, show_snackbar),
-            progress_view(page, client, user_actual, show_snackbar),
-        ]
-        container_principal.content = vistas[index]
+        if index == 0:
+            content = home_view(page, client, user_actual, show_snackbar, logout_handler)
+        elif index == 1:
+            content = profile_view(page, client, user_actual, show_snackbar)
+        elif index == 2:
+            content = workout_view(page, client, user_actual, show_snackbar)
+        elif index == 3:
+            content = diet_view(page, client, user_actual, show_snackbar)
+        elif index == 4:
+            content = progress_view(page, client, user_actual, show_snackbar)
+        else:
+            return
+
+        container_principal.content = content
         page.update()
 
     def on_nav_change(e):

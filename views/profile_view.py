@@ -63,18 +63,49 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     lbl_bf = ft.Text("% Grasa: --", size=16, color="white70")
     lbl_masa_magra = ft.Text("Masa Magra: -- kg", size=14, color="white38")
 
-    def calcular_en_vivo():
+    def safe_float(value, default):
+        """Convierte a float de forma segura para evitar errores en tiempo real."""
         try:
-            # Actualizamos el objeto temporalmente
-            user.genero = dd_genero.value
-            user.altura = float(txt_altura.value) if txt_altura.value else 170
-            user.peso_actual = float(txt_peso.value) if txt_peso.value else 0
-            user.cuello = float(txt_cuello.value) if txt_cuello.value else 40
-            user.cintura = float(txt_cintura.value) if txt_cintura.value else 85
-            user.cadera = float(txt_cadera.value) if txt_cadera.value else 90
-            user.objetivo = dd_objetivo.value
+            return float(value) if value and str(value).strip() else default
+        except ValueError:
+            return default
+
+    def calcular_en_vivo(init=False):
+        try:
+            # Validaciones de color sutiles para indicar campos requeridos/erróneos
+            campos_num = [txt_edad, txt_peso, txt_altura, txt_cuello, txt_cintura]
+            for c in campos_num:
+                try:
+                    float(c.value)
+                    c.border_color = "#FFD700"
+                except:
+                    c.border_color = "red700" if c.value else "#FFD700"
+
+            # Obtenemos valores de los campos (sin mutar el objeto 'user' real todavía)
+            val_genero = dd_genero.value
+            val_altura = safe_float(txt_altura.value, user.altura or 170.0)
+            val_peso = safe_float(txt_peso.value, user.peso_actual or 70.0)
+            val_cuello = safe_float(txt_cuello.value, user.cuello or 40.0)
+            val_cintura = safe_float(txt_cintura.value, user.cintura or 85.0)
+            val_cadera = safe_float(txt_cadera.value, user.cadera or 90.0)
+            val_objetivo = dd_objetivo.value
+            val_edad = int(safe_float(txt_edad.value, user.edad or 25))
+
+            # Creamos un usuario temporal para el cálculo de macros
+            temp_user = User(
+                id=user.id,
+                nombre=user.nombre,
+                objetivo=val_objetivo,
+                peso_actual=val_peso,
+                genero=val_genero,
+                altura=val_altura,
+                cuello=val_cuello,
+                cintura=val_cintura,
+                cadera=val_cadera,
+                edad=val_edad
+            )
             
-            res = user.get_macros()
+            res = temp_user.get_macros()
             
             lbl_tdee.value = f"Quemado Diario (TDEE): {res['tdee']} kcal"
             
@@ -92,8 +123,9 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             lbl_bf.value = f"Grasa Corporal: {res['bf']}%"
             lbl_masa_magra.value = f"Masa Muscular: {res['masa_magra']} kg"
         except Exception as e:
-            pass # Silenciamos errores parciales durante el tipeo
-        page.update()
+            print(f"Error en calculo_en_vivo: {e}")
+        
+        if not init: page.update()
 
     def actualizar_ui():
         txt_cadera.visible = (dd_genero.value == "Mujer")
@@ -118,7 +150,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 'edad': int(txt_edad.value)
             })
             if success:
-                # Actualizar el objeto user en memoria
+                # Actualizar el objeto user en memoria (ahora sí es oficial)
                 user.nombre = txt_nombre.value
                 user.objetivo = dd_objetivo.value
                 user.nivel = dd_nivel.value
@@ -142,7 +174,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         except Exception as ex:
             show_snackbar(f"Error: {ex}", True)
 
-    calcular_en_vivo()
+    calcular_en_vivo(init=True)
 
     return ft.Column([
         ft.Container(height=10),

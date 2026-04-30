@@ -59,7 +59,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         show_selected_icon=False,
     )
 
-    def update_workout_list(dia=None):
+    def update_workout_list(dia=None, init=False):
         nonlocal dia_seleccionado
         if dia: dia_seleccionado = dia
         
@@ -138,7 +138,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                         padding=12, bgcolor="#1E1E1E", border_radius=10
                     )
                 )
-        page.update()
+        if not init: page.update()
 
     # --- SELECTOR DE MESES (Con Bloqueo y Refresco) ---
     row_meses = ft.Row(scroll="auto", spacing=10, wrap=True, alignment="center")
@@ -155,9 +155,9 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             width=110
         )
 
-    def actualizar_ui_meses():
+    def actualizar_ui_meses(init=False):
         row_meses.controls = [crear_btn_mes(i) for i in range(1, 7)]
-        page.update()
+        if not init: page.update()
 
     def set_mes(n):
         nonlocal mes_seleccionado
@@ -165,8 +165,8 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         update_workout_list()
 
     # --- UI LAYOUT ---
-    actualizar_ui_meses()
-    update_workout_list()
+    actualizar_ui_meses(init=True)
+    update_workout_list(init=True)
 
     return ft.Column([
         ft.Text("PROGRAMA DE ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
