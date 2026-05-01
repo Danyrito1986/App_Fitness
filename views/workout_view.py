@@ -109,7 +109,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 last_w = db.get_last_weight(client, user.id, ex.nombre)
                 sugerencia_txt = f"{last_w + 2.5}kg" if last_w > 0 else "Peso moderado"
                 
-                def on_save_peso(nombre_ex, field, lbl):
+                def on_save_peso(e, nombre_ex, field, lbl):
                     try:
                         peso = float(field.value)
                         if db.log_pr(client, user.id, nombre_ex, peso):
