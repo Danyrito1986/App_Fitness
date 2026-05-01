@@ -278,3 +278,28 @@ def get_last_weight(client: Client, user_id: int, exercise_name: str) -> float:
     except Exception as e:
         print(f"Error en get_last_weight: {e}")
         return 0.0
+
+def save_workout_progress(client: Client, user_id: int, fecha: str, datos: dict) -> bool:
+    """Guarda o actualiza el estado de las series completadas en JSONB."""
+    try:
+        # Usar upsert para actualizar si ya existe un registro para ese usuario y fecha
+        client.table("progreso_series").upsert({
+            "usuario_id": user_id,
+            "fecha": fecha,
+            "datos": datos
+        }, on_conflict="usuario_id,fecha").execute()
+        return True
+    except Exception as e:
+        print(f"Error save_workout_progress: {e}")
+        return False
+
+def get_workout_progress(client: Client, user_id: int, fecha: str) -> dict:
+    """Recupera el estado de las series completadas de la base de datos."""
+    try:
+        response = client.table("progreso_series").select("datos").eq("usuario_id", user_id).eq("fecha", fecha).execute()
+        if response.data:
+            return response.data[0]["datos"]
+        return {}
+    except Exception as e:
+        print(f"Error get_workout_progress: {e}")
+        return {}

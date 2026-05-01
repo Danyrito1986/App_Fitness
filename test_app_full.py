@@ -10,6 +10,7 @@ from models import User, Exercise, Diet
 import db_manager as db
 from views.workout_view import workout_view
 from views.profile_view import profile_view
+from services.calculator import calculate_macros
 
 class TestAppFull(unittest.TestCase):
 
@@ -44,14 +45,14 @@ class TestAppFull(unittest.TestCase):
         # Caso 1: Hombre con sobrepeso (objetivo definición)
         u_h = User(id=1, nombre="Juan", objetivo="Definición / Quema de Grasa", peso_actual=100.0, 
                   genero="Hombre", altura=180.0, cuello=42.0, cintura=105.0)
-        res_h = u_h.get_macros()
+        res_h = calculate_macros(u_h)
         self.assertLess(res_h['ajuste'], 0, "Déficit debería ser negativo para definición.")
         self.assertGreater(res_h['bf'], 20, "Grasa corporal debería ser alta para estas medidas.")
 
         # Caso 2: Mujer delgada (objetivo volumen)
         u_m = User(id=2, nombre="Maria", objetivo="Aumento de masa muscular", peso_actual=55.0, 
                   genero="Mujer", altura=165.0, cuello=32.0, cintura=65.0, cadera=90.0)
-        res_m = u_m.get_macros()
+        res_m = calculate_macros(u_m)
         self.assertGreater(res_m['ajuste'], 0, "Superávit debería ser positivo para volumen.")
         print("✓ Lógica de Modelos y Macros OK.")
 

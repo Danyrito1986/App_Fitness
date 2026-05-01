@@ -2,11 +2,29 @@ import flet as ft
 from models import User
 from datetime import datetime
 from supabase import Client
+import json
+import os
+from services.calculator import calculate_macros
+
+# Cargar datos nutricionales una sola vez al importar el módulo
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+JSON_PATH = os.path.join(BASE_DIR, "assets", "data", "diet_plan.json")
+
+try:
+    with open(JSON_PATH, "r", encoding="utf-8") as f:
+        DIET_DATA = json.load(f)
+    FUENTES = DIET_DATA["fuentes"]
+    # Convertir llaves de la matriz a enteros
+    MATRIZ = {int(k): v for k, v in DIET_DATA["matriz"].items()}
+except Exception as e:
+    print(f"Error cargando diet_plan.json: {e}")
+    FUENTES = {"proteina": [], "carbo": [], "grasa": []}
+    MATRIZ = {}
 
 def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de nutrición profesional con variedad 21/7 y horarios de suplementación."""
     
-    macros = user.get_macros()
+    macros = calculate_macros(user)
     cal, p, c, f = macros['cal'], macros['p'], macros['c'], macros['f']
     
     dia_semana = datetime.now().weekday()
@@ -15,79 +33,17 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
     def get_alimentos_dinamicos(p_comida, c_comida, f_comida, tipo_comida):
         """Calcula gramos de alimentos basados en el día y el TIEMPO de comida."""
         
-        fuentes = {
-            "proteina": [
-                {"nombre": "Pechuga de Pollo", "p": 31, "icon": "restaurant"},        # 0
-                {"nombre": "Res Magra (Bistec)", "p": 26, "icon": "kebab_dining"},   # 1
-                {"nombre": "Pescado Blanco", "p": 24, "icon": "set_meal"},          # 2
-                {"nombre": "Pechuga de Pavo", "p": 29, "icon": "restaurant"},        # 3
-                {"nombre": "Salmón Fresco", "p": 20, "icon": "set_meal"},           # 4
-                {"nombre": "Atún en Agua", "p": 25, "icon": "set_meal"},            # 5
-                {"nombre": "Claras de Huevo", "p": 11, "icon": "egg"},              # 6
-                {"nombre": "Lomo de Cerdo", "p": 27, "icon": "kebab_dining"}        # 7
-            ],
-            "carbo": [
-                {"nombre": "Arroz Blanco", "c": 28, "icon": "grain"},               # 0
-                {"nombre": "Papa Cocida", "c": 20, "icon": "fiber_manual_record"},  # 1
-                {"nombre": "Quinoa Cocida", "c": 21, "icon": "bakery_dining"},      # 2
-                {"nombre": "Pasta Integral", "c": 25, "icon": "dinner_dining"},     # 3
-                {"nombre": "Avena en Hojuelas", "c": 21, "icon": "breakfast_dining"},# 4
-                {"nombre": "Camote", "c": 24, "icon": "fiber_manual_record"},       # 5
-                {"nombre": "Tortilla de Maíz", "c": 15, "icon": "circle"},          # 6
-                {"nombre": "Pan Integral", "c": 45, "icon": "bakery_dining"}        # 7
-            ],
-            "grasa": [
-                {"nombre": "Aguacate Hass", "g": 15, "icon": "eco"},                # 0
-                {"nombre": "Almendras", "g": 50, "icon": "nuts"},                   # 1
-                {"nombre": "Aceite de Oliva", "g": 92, "icon": "water_drop"},       # 2
-                {"nombre": "Crema de Cacahuate", "g": 50, "icon": "favorite"},      # 3
-                {"nombre": "Nueces", "g": 65, "icon": "nuts"},                      # 4
-                {"nombre": "Aceite de Coco", "g": 99, "icon": "water_drop"},        # 5
-                {"nombre": "Queso Panela", "g": 18, "icon": "restaurant"}           # 6
-            ]
-        }
-
-        # MATRIZ 21/7 (Variedad absoluta por día y por tiempo)
-        matriz = {
-            0: { # Lunes
-                "Desayuno": {"p": 6, "c": 4, "g": 1}, # Claras, Avena, Almendras
-                "Almuerzo": {"p": 0, "c": 0, "g": 0}, # Pollo, Arroz, Aguacate
-                "Cena": {"p": 2, "c": 1, "g": 2}      # Pescado, Papa, Oliva
-            },
-            1: { # Martes
-                "Desayuno": {"p": 6, "c": 7, "g": 3}, # Claras, Pan, Crema Cacahuate
-                "Almuerzo": {"p": 1, "c": 1, "g": 1}, # Res, Papa, Almendras
-                "Cena": {"p": 3, "c": 3, "g": 0}      # Pavo, Pasta, Aguacate
-            },
-            2: { # Miércoles
-                "Desayuno": {"p": 0, "c": 4, "g": 4}, # Pollo (desmenuzado), Avena, Nueces
-                "Almuerzo": {"p": 2, "c": 2, "g": 2}, # Pescado, Quinoa, Oliva
-                "Cena": {"p": 7, "c": 6, "g": 0}      # Cerdo, Tortillas, Aguacate
-            },
-            3: { # Jueves
-                "Desayuno": {"p": 6, "c": 1, "g": 6}, # Claras, Papa, Panela
-                "Almuerzo": {"p": 3, "c": 3, "g": 3}, # Pavo, Pasta, Crema Cacahuate
-                "Cena": {"p": 4, "c": 0, "g": 2}      # Salmón, Arroz, Oliva
-            },
-            4: { # Viernes
-                "Desayuno": {"p": 5, "c": 7, "g": 0}, # Atún, Pan, Aguacate
-                "Almuerzo": {"p": 0, "c": 0, "g": 0}, # Pollo, Arroz, Aguacate
-                "Cena": {"p": 1, "c": 5, "g": 1}      # Res, Camote, Almendras
-            },
-            5: { # Sábado
-                "Desayuno": {"p": 6, "c": 4, "g": 3}, # Claras, Avena, Crema Cacahuate
-                "Almuerzo": {"p": 5, "c": 5, "g": 4}, # Atún, Camote, Nueces
-                "Cena": {"p": 0, "c": 6, "g": 2}      # Pollo, Tortillas, Oliva
-            },
-            6: { # Domingo
-                "Desayuno": {"p": 6, "c": 7, "g": 2}, # Claras, Pan, Oliva
-                "Almuerzo": {"p": 4, "c": 0, "g": 0}, # Salmón, Arroz, Aguacate
-                "Cena": {"p": 2, "c": 1, "g": 6}      # Pescado, Papa, Panela
+        try:
+            indices = MATRIZ[dia_semana][tipo_comida]
+            f_p = FUENTES["proteina"][indices["p"]]
+            f_c = FUENTES["carbo"][indices["c"]]
+            f_g = FUENTES["grasa"][indices["g"]]
+        except KeyError:
+            return {
+                "p": {"desc": "Error datos", "icon": "error"},
+                "c": {"desc": "Error datos", "icon": "error"},
+                "g": {"desc": "Error datos", "icon": "error"}
             }
-        }
-
-        indices = matriz[dia_semana][tipo_comida]
-        f_p, f_c, f_g = fuentes["proteina"][indices["p"]], fuentes["carbo"][indices["c"]], fuentes["grasa"][indices["g"]]
 
         # Cálculo de gramos
         gr_p = int((p_comida / f_p["p"]) * 100)
@@ -206,5 +162,3 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
         ft.Container(height=20),
         ft.Text("* Las medidas son en alimentos ya cocidos.", size=10, color="white24", italic=True)
     ], scroll=ft.ScrollMode.ADAPTIVE, horizontal_alignment="center", spacing=15)
-
-

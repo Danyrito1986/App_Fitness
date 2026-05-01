@@ -2,12 +2,17 @@ import flet as ft
 import db_manager as db
 from models import User
 from supabase import Client
+from services.calculator import calculate_macros
+from components.metric_summary import MetricSummary
 
 def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de perfil avanzada con cálculos de grasa y masa muscular responsiva."""
     
     # --- CONFIGURACIÓN DE ANCHO RESPONSIVO ---
     MAX_WIDTH = 380
+
+    # --- COMPONENTES ---
+    metric_summary = MetricSummary(MAX_WIDTH)
 
     # --- CAMPOS DE ENTRADA ---
     txt_nombre = ft.TextField(label="Nombre", value=user.nombre, max_length=50, width=MAX_WIDTH, border_color="#FFD700")
@@ -58,13 +63,6 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     txt_gluteo = ft.TextField(label="Glúteo (cm)", value=str(user.gluteo), width=110, border_color="#2196F3")
     txt_muslo = ft.TextField(label="Muslo (cm)", value=str(user.muslo), width=110, border_color="#2196F3")
 
-    # --- PANEL DE RESULTADOS ---
-    lbl_tdee = ft.Text("Mantenimiento: -- kcal", size=14, color="white54")
-    lbl_ajuste = ft.Text("Ajuste: -- kcal", size=14, weight="bold")
-    lbl_cal_final = ft.Text("META DIARIA: -- kcal", size=20, weight="bold", color="#FFD700")
-    lbl_bf = ft.Text("% Grasa: --", size=16, color="white70")
-    lbl_masa_magra = ft.Text("Masa Magra: -- kg", size=14, color="white38")
-
     def safe_float(value, default):
         try:
             return float(value) if value and str(value).strip() else default
@@ -96,13 +94,8 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 cuello=val_cuello, cintura=val_cintura, cadera=val_cadera, edad=val_edad
             )
             
-            res = temp_user.get_macros()
-            lbl_tdee.value = f"TDEE: {res['tdee']} kcal"
-            lbl_ajuste.value = f"{'Extra' if res['ajuste'] > 0 else 'Déficit'}: {res['ajuste']} kcal"
-            lbl_ajuste.color = "#4CAF50" if res['ajuste'] >= 0 else "#FF5252"
-            lbl_cal_final.value = f"META: {res['cal']} kcal"
-            lbl_bf.value = f"Grasa: {res['bf']}%"
-            lbl_masa_magra.value = f"Músculo: {res['masa_magra']} kg"
+            res = calculate_macros(temp_user)
+            metric_summary.actualizar(res)
         except Exception as e:
             print(f"Error: {e}")
         
@@ -157,16 +150,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         ft.Text("CONTROL VOLUMEN", size=14, weight="bold", color="#2196F3"),
         ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", wrap=True),
         
-        ft.Container(
-            content=ft.Column([
-                ft.Row([lbl_tdee, lbl_ajuste], alignment="center", spacing=20),
-                ft.Divider(height=1, color="white10"),
-                lbl_cal_final,
-                ft.Row([lbl_bf, lbl_masa_magra], alignment="center", spacing=20)
-            ], horizontal_alignment="center", spacing=10),
-            padding=15, bgcolor="#1E1E1E", border_radius=15, width=MAX_WIDTH,
-            border=ft.border.all(1, "white10")
-        ),
+        metric_summary,
         
         ft.ElevatedButton(
             "GUARDAR CAMBIOS", 
@@ -177,3 +161,4 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         ),
         ft.Container(height=20)
     ], expand=True, horizontal_alignment="center", scroll="adaptive")
+

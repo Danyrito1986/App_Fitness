@@ -5,9 +5,18 @@ import threading
 from models import User, Exercise
 from supabase import Client
 from datetime import datetime
+from components.timer_overlay import TimerOverlay
+from components.exercise_card import ExerciseCard
+from components.cardio_panel import CardioPanel
+from components.status_header import StatusHeader
 
 def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de entrenamiento avanzada con persistencia, series y cronómetro."""
+    
+    # --- COMPONENTES ---
+    timer_overlay = TimerOverlay()
+    cardio_panel = CardioPanel()
+    status_header = StatusHeader(user)
     
     # --- ESTADO Y PERSISTENCIA ---
     mes_seleccionado = user.mes_actual
@@ -18,28 +27,22 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
     hoy_str = datetime.now().strftime("%Y-%m-%d")
     progreso_local = page.client_storage.get("workout_progress") or {}
     
-    # Si el progreso es de otro día, lo limpiamos
-    if progreso_local.get("fecha") != hoy_str:
-        progreso_local = {"fecha": hoy_str, "completados": {}}
+    # Si el progreso es de otro día o está vacío para hoy, intentar recuperar de Supabase
+    if progreso_local.get("fecha") != hoy_str or not progreso_local.get("completados"):
+        # Intentamos restaurar de la nube (backup de seguridad)
+        datos_nube = db.get_workout_progress(client, user.id, hoy_str)
+        if datos_nube:
+            progreso_local = {"fecha": hoy_str, "completados": datos_nube}
+        else:
+            # Si no hay nada en la nube, inicializamos vacío para hoy
+            progreso_local = {"fecha": hoy_str, "completados": {}}
         page.client_storage.set("workout_progress", progreso_local)
 
     # --- ELEMENTOS DE UI DINÁMICOS ---
     lista_ejercicios = ft.Column(spacing=15)
-    progreso_barra = ft.ProgressBar(value=user.entrenos_mes/20, width=300, color="#FFD700", bgcolor="#333333")
-    lbl_progreso = ft.Text(f"Progreso Mes {user.mes_actual}: {user.entrenos_mes}/20 entrenos", size=12, color="white54")
-    lbl_rutina_actual = ft.Text(f"RUTINA ACTUAL: MES {mes_seleccionado} - DIA {dia_seleccionado}", size=14, weight="bold", color="#FFD700")
-    
-    # Contenedor de Cardio
-    cardio_container = ft.Container(
-        content=ft.Column([
-            ft.Text("SUGERENCIA DE CARDIO", size=12, weight="bold", color="#2196F3"),
-            ft.Text("", size=11, color="white70", italic=True)
-        ], spacing=2),
-        padding=10, bgcolor="#1A237E", border_radius=8, visible=False
-    )
 
     # --- LÓGICA DE PERSISTENCIA ---
-    def guardar_progreso_serie(ex_id, serie_idx, valor):
+    def guardar_progreso_serie(ex_id, serie_idx, valor, t_descanso):
         key = f"{mes_seleccionado}_{dia_seleccionado}_{ex_id}"
         if key not in progreso_local["completados"]:
             progreso_local["completados"][key] = []
@@ -47,6 +50,8 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         if valor:
             if serie_idx not in progreso_local["completados"][key]:
                 progreso_local["completados"][key].append(serie_idx)
+            # Iniciar descanso si se marca
+            threading.Thread(target=timer_overlay.iniciar_descanso, args=(t_descanso, page), daemon=True).start()
         else:
             if serie_idx in progreso_local["completados"][key]:
                 progreso_local["completados"][key].remove(serie_idx)
@@ -58,42 +63,19 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         completados = progreso_local["completados"].get(key, [])
         return serie_idx in completados
 
-    # --- CRONÓMETRO DE DESCANSO ---
-    overlay_timer = ft.Container(
-        content=ft.Column([
-            ft.Text("DESCANSO", size=16, weight="bold", color="black"),
-            ft.Text("60", size=40, weight="bold", color="black"),
-            ft.ProgressBar(value=1.0, width=150, color="black", bgcolor="white30")
-        ], horizontal_alignment="center", spacing=5),
-        bgcolor="#FFD700", padding=20, border_radius=20, 
-        width=200, height=180, alignment=ft.alignment.center,
-        shadow=ft.BoxShadow(blur_radius=20, color="black"),
-        visible=False, animate_opacity=300, opacity=0
-    )
-
-    def iniciar_descanso(segundos):
-        overlay_timer.visible = True
-        overlay_timer.opacity = 1
-        txt_timer = overlay_timer.content.controls[1]
-        pb_timer = overlay_timer.content.controls[2]
+    def finalizar_entreno(e):
+        # 1. Registrar en historial general
+        rutina_act = f"MES {mes_seleccionado} - DÍA {dia_seleccionado}"
+        if db.log_workout(client, user.id, rutina_act):
+            # 2. Respaldar progreso granular en Supabase
+            db.save_workout_progress(client, user.id, hoy_str, progreso_local["completados"])
+            show_snackbar("¡Día completado y respaldado! 💪", False)
+        else:
+            show_snackbar("Error al guardar en la nube", True)
         page.update()
-        
-        for i in range(segundos, -1, -1):
-            if not overlay_timer.visible: break
-            txt_timer.value = str(i)
-            pb_timer.value = i / segundos
-            page.update()
-            time.sleep(1)
-        
-        if overlay_timer.visible:
-            txt_timer.value = "¡LISTO!"
-            page.update()
-            time.sleep(1)
-            overlay_timer.opacity = 0
-            page.update()
-            time.sleep(0.3)
-            overlay_timer.visible = False
-            page.update()
+
+    def on_timer_click(t):
+        threading.Thread(target=timer_overlay.iniciar_descanso, args=(t, page), daemon=True).start()
 
     # --- FUNCIONES DE ACTUALIZACIÓN ---
     def set_mes(n):
@@ -106,9 +88,9 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         nonlocal dia_seleccionado
         if dia: dia_seleccionado = dia
         
-        lbl_rutina_actual.value = f"RUTINA ACTUAL: MES {mes_seleccionado} - DIA {dia_seleccionado}"
+        status_header.update_rutina(mes_seleccionado, dia_seleccionado)
         actualizar_ui_dias()
-        actualizar_cardio()
+        cardio_panel.actualizar_cardio(user.objetivo)
         
         exs = db.get_dynamic_exercises(client, user.genero, nivel_seleccionado, mes_seleccionado, dia_seleccionado, user.objetivo)
         lista_ejercicios.controls.clear()
@@ -120,25 +102,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 last_w = db.get_last_weight(client, user.id, ex.nombre)
                 sugerencia_txt = f"{last_w + 2.5}kg" if last_w > 0 else "Peso moderado"
                 
-                lbl_sugerencia = ft.Text(f"Sugerencia: {sugerencia_txt}", size=11, color="#FFD700", weight="bold")
-                
-                # Fila de Series (Checkboxes)
-                row_series = ft.Row(wrap=True, spacing=5)
-                for s_idx in range(ex.series):
-                    is_checked = obtener_progreso_serie(ex.id, s_idx)
-                    cb = ft.Checkbox(
-                        label=f"S{s_idx+1}", 
-                        value=is_checked,
-                        fill_color="#FFD700",
-                        on_change=lambda e, ex_id=ex.id, idx=s_idx, t=ex.descanso: 
-                            (guardar_progreso_serie(ex_id, idx, e.control.value), 
-                             threading.Thread(target=iniciar_descanso, args=(t,), daemon=True).start() if e.control.value else None)
-                    )
-                    row_series.controls.append(cb)
-
-                txt_peso_hoy = ft.TextField(label="Kg", width=70, height=35, text_size=12, border_color="#FFD700")
-
-                def guardar_peso(e, nombre_ex=ex.nombre, field=txt_peso_hoy, lbl=lbl_sugerencia):
+                def on_save_peso(nombre_ex, field, lbl):
                     try:
                         peso = float(field.value)
                         if db.log_pr(client, user.id, nombre_ex, peso):
@@ -147,36 +111,17 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                             page.update()
                     except: show_snackbar("Valor inválido", True)
 
-                lista_ejercicios.controls.append(
-                    ft.Container(
-                        content=ft.Column([
-                            ft.Row([
-                                ft.Text(ex.nombre, weight="bold", size=15, expand=True),
-                                ft.IconButton("timer", icon_color="#FFD700", on_click=lambda _: threading.Thread(target=iniciar_descanso, args=(ex.descanso,), daemon=True).start())
-                            ]),
-                            row_series,
-                            ft.Row([
-                                ft.Column([ft.Text(f"Reps: {ex.reps}", size=11, color="white54"), lbl_sugerencia], expand=True),
-                                txt_peso_hoy,
-                                ft.IconButton("save", icon_color="#4CAF50", on_click=guardar_peso)
-                            ])
-                        ], spacing=8),
-                        padding=12, bgcolor="#1E1E1E", border_radius=12
-                    )
+                card = ExerciseCard(
+                    ex, 
+                    obtener_progreso_serie, 
+                    guardar_progreso_serie, 
+                    on_save_peso, 
+                    on_timer_click, 
+                    sugerencia_txt
                 )
-        if not init: page.update()
+                lista_ejercicios.controls.append(card)
 
-    def actualizar_cardio():
-        msg = ""
-        if user.objetivo == "Aumento de masa muscular":
-            msg = "10-15 min baja intensidad (Caminata) - AL FINAL. Para salud cardíaca sin quemar músculo."
-        elif user.objetivo == "Definición / Quema de Grasa":
-            msg = "25-35 min intensidad moderada (LISS) - AL FINAL. Maximiza oxidación de grasas."
-        else:
-            msg = "20 min HIIT o intervalos - AL FINAL. Mejora resistencia."
-        
-        cardio_container.content.controls[1].value = msg
-        cardio_container.visible = True
+        if not init: page.update()
 
     # --- COMPONENTES DE NAVEGACIÓN ---
     row_meses = ft.Row(scroll="auto", spacing=10)
@@ -211,25 +156,24 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
     return ft.Stack([
         ft.Column([
             ft.Text("ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
-            ft.Column([lbl_progreso, progreso_barra], horizontal_alignment="center"),
+            status_header,
             ft.Divider(height=10, color="transparent"),
             row_meses,
             ft.Divider(height=10, color="white12"),
             row_dias,
-            lbl_rutina_actual,
-            cardio_container,
+            cardio_panel,
             ft.Container(content=lista_ejercicios, expand=True),
-            ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon="check_circle", on_click=lambda _: show_snackbar("¡Día completado! 💪", False),
+            ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon="check_circle", on_click=finalizar_entreno,
                               style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
             ft.Container(height=20)
         ], expand=True, horizontal_alignment="center", scroll="adaptive"),
         
         # Overlay del Cronómetro (Centrado)
         ft.Container(
-            content=overlay_timer,
+            content=timer_overlay,
             alignment=ft.alignment.center,
             expand=True,
-            # Este contenedor atrapa clics si overlay_timer es visible
-            visible=False 
+            # El contenedor del overlay controla su propia visibilidad interna
         )
     ])
+

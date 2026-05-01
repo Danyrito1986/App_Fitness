@@ -1,0 +1,70 @@
+{
+  "fuentes": {
+    "proteina": [
+      {"nombre": "Pechuga de Pollo", "p": 31, "icon": "restaurant"},
+      {"nombre": "Res Magra (Bistec)", "p": 26, "icon": "kebab_dining"},
+      {"nombre": "Pescado Blanco", "p": 24, "icon": "set_meal"},
+      {"nombre": "Pechuga de Pavo", "p": 29, "icon": "restaurant"},
+      {"nombre": "Salmón Fresco", "p": 20, "icon": "set_meal"},
+      {"nombre": "Atún en Agua", "p": 25, "icon": "set_meal"},
+      {"nombre": "Claras de Huevo", "p": 11, "icon": "egg"},
+      {"nombre": "Lomo de Cerdo", "p": 27, "icon": "kebab_dining"}
+    ],
+    "carbo": [
+      {"nombre": "Arroz Blanco", "c": 28, "icon": "grain"},
+      {"nombre": "Papa Cocida", "c": 20, "icon": "fiber_manual_record"},
+      {"nombre": "Quinoa Cocida", "c": 21, "icon": "bakery_dining"},
+      {"nombre": "Pasta Integral", "c": 25, "icon": "dinner_dining"},
+      {"nombre": "Avena en Hojuelas", "c": 21, "icon": "breakfast_dining"},
+      {"nombre": "Camote", "c": 24, "icon": "fiber_manual_record"},
+      {"nombre": "Tortilla de Maíz", "c": 15, "icon": "circle"},
+      {"nombre": "Pan Integral", "c": 45, "icon": "bakery_dining"}
+    ],
+    "grasa": [
+      {"nombre": "Aguacate Hass", "g": 15, "icon": "eco"},
+      {"nombre": "Almendras", "g": 50, "icon": "nuts"},
+      {"nombre": "Aceite de Oliva", "g": 92, "icon": "water_drop"},
+      {"nombre": "Crema de Cacahuate", "g": 50, "icon": "favorite"},
+      {"nombre": "Nueces", "g": 65, "icon": "nuts"},
+      {"nombre": "Aceite de Coco", "g": 99, "icon": "water_drop"},
+      {"nombre": "Queso Panela", "g": 18, "icon": "restaurant"}
+    ]
+  },
+  "matriz": {
+    "0": {
+      "Desayuno": {"p": 6, "c": 4, "g": 1},
+      "Almuerzo": {"p": 0, "c": 0, "g": 0},
+      "Cena": {"p": 2, "c": 1, "g": 2}
+    },
+    "1": {
+      "Desayuno": {"p": 6, "c": 7, "g": 3},
+      "Almuerzo": {"p": 1, "c": 1, "g": 1},
+      "Cena": {"p": 3, "c": 3, "g": 0}
+    },
+    "2": {
+      "Desayuno": {"p": 0, "c": 4, "g": 4},
+      "Almuerzo": {"p": 2, "c": 2, "g": 2},
+      "Cena": {"p": 7, "c": 6, "g": 0}
+    },
+    "3": {
+      "Desayuno": {"p": 6, "c": 1, "g": 6},
+      "Almuerzo": {"p": 3, "c": 3, "g": 3},
+      "Cena": {"p": 4, "c": 0, "g": 2}
+    },
+    "4": {
+      "Desayuno": {"p": 5, "c": 7, "g": 0},
+      "Almuerzo": {"p": 0, "c": 0, "g": 0},
+      "Cena": {"p": 1, "c": 5, "g": 1}
+    },
+    "5": {
+      "Desayuno": {"p": 6, "c": 4, "g": 3},
+      "Almuerzo": {"p": 5, "c": 5, "g": 4},
+      "Cena": {"p": 0, "c": 6, "g": 2}
+    },
+    "6": {
+      "Desayuno": {"p": 6, "c": 7, "g": 2},
+      "Almuerzo": {"p": 4, "c": 0, "g": 0},
+      "Cena": {"p": 2, "c": 1, "g": 6}
+    }
+  }
+}
