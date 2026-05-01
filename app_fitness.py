@@ -109,13 +109,24 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     import os
-    # Render usa la variable de entorno PORT, local usa 8550
-    port = int(os.environ.get("PORT", 8551))
-    # 'web_browser' es vital para que funcione como PWA en celulares
-    ft.app(
-        target=main, 
-        view=ft.AppView.WEB_BROWSER, 
-        host="0.0.0.0", 
-        port=port, 
-        assets_dir="assets"
-    )
+    import traceback
+    import sys
+    
+    try:
+        # Render usa la variable de entorno PORT, local usa 8551
+        port = int(os.environ.get("PORT", 8551))
+        print(f"INFO: Iniciando App en puerto {port}...")
+        
+        ft.app(
+            target=main, 
+            view=ft.AppView.WEB_BROWSER, 
+            host="0.0.0.0", 
+            port=port, 
+            assets_dir="assets"
+        )
+    except Exception as e:
+        print("\n" + "="*50)
+        print("ERROR CRITICO AL INICIAR LA APP:")
+        traceback.print_exc()
+        print("="*50 + "\n")
+        sys.exit(1)
