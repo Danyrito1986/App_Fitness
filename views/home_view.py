@@ -10,9 +10,19 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
     stats = db.get_workout_stats(client, user.id)
     agua_hoy = db.get_daily_water(client, user.id)
 
-    # --- LÓGICA DE HIDRATACIÓN DINÁMICA ---
-    # Meta: 35ml por kg de peso
-    meta_litros = round(user.peso_actual * 0.035, 2)
+    # --- LÓGICA DE HIDRATACIÓN INTELIGENTE ---
+    # Base: 35ml por kg de peso
+    meta_base = user.peso_actual * 0.035
+    
+    # Modificador por nivel
+    multiplicador_nivel = {"Novato": 1.0, "Intermedio": 1.10, "Pro": 1.20}
+    meta_ajustada = meta_base * multiplicador_nivel.get(user.nivel, 1.0)
+    
+    # Modificador por objetivo (Definición requiere más agua)
+    if user.objetivo == "Definición / Quema de Grasa":
+        meta_ajustada *= 1.10
+        
+    meta_litros = round(meta_ajustada, 2)
     consumo_actual_l = round(agua_hoy * 0.25, 2) # Cada vaso son 250ml
     restante_l = max(0, round(meta_litros - consumo_actual_l, 2))
 
