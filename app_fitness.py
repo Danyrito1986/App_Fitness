@@ -143,12 +143,18 @@ def main(page: ft.Page):
 if __name__ == "__main__":
     try:
         port = int(os.environ.get("PORT", 8551))
-        print(f"--- INICIANDO SERVIDOR EN PUERTO {port} ---")
+        
+        # FORZAR BINDING PARA RENDER (Garantiza que use 0.0.0.0 y el puerto correcto)
+        os.environ["FLET_SERVER_IP"] = "0.0.0.0"
+        os.environ["FLET_SERVER_PORT"] = str(port)
+        
+        print(f"--- INICIANDO SERVIDOR WEB EN 0.0.0.0:{port} ---")
+        
         ft.app(
             target=main, 
-            view=ft.AppView.WEB_BROWSER, 
-            host="0.0.0.0", 
+            view=None, # IMPORTANTE: 'None' deshabilita apertura de ventanas y activa modo servidor
             port=port, 
+            host="0.0.0.0", 
             assets_dir="assets"
         )
     except Exception as e:
