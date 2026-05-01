@@ -175,12 +175,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.Container(height=20)
         ], expand=True, horizontal_alignment="center", scroll="adaptive"),
         
-        # Overlay del Cronómetro (Centrado)
-        ft.Container(
-            content=timer_overlay,
-            alignment=ft.alignment.center,
-            expand=True,
-            # El contenedor del overlay controla su propia visibilidad interna
-        )
+        # Overlay del Cronómetro (ahora maneja su propia expansión y visibilidad)
+        timer_overlay
     ])
 
