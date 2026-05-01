@@ -1,8 +1,7 @@
 import flet as ft
 
-class MetricSummary(ft.UserControl):
+class MetricSummary(ft.Container):
     def __init__(self, max_width):
-        super().__init__()
         self.max_width = max_width
         self.lbl_tdee = ft.Text("Mantenimiento: -- kcal", size=14, color="white54")
         self.lbl_ajuste = ft.Text("Ajuste: -- kcal", size=14, weight="bold")
@@ -10,7 +9,7 @@ class MetricSummary(ft.UserControl):
         self.lbl_bf = ft.Text("% Grasa: --", size=16, color="white70")
         self.lbl_masa_magra = ft.Text("Masa Magra: -- kg", size=14, color="white38")
         
-        self.container = ft.Container(
+        super().__init__(
             content=ft.Column([
                 ft.Row([self.lbl_tdee, self.lbl_ajuste], alignment="center", spacing=20),
                 ft.Divider(height=1, color="white10"),
@@ -20,9 +19,6 @@ class MetricSummary(ft.UserControl):
             padding=15, bgcolor="#1E1E1E", border_radius=15, width=self.max_width,
             border=ft.border.all(1, "white10")
         )
-
-    def build(self):
-        return self.container
 
     def actualizar(self, res):
         self.lbl_tdee.value = f"TDEE: {res['tdee']} kcal"
