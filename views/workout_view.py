@@ -23,19 +23,26 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
     dia_seleccionado = 1
     nivel_seleccionado = user.nivel
     
-    # Intentar cargar progreso guardado de hoy
+    # Intentar cargar progreso guardado de hoy con validación robusta
     hoy_str = datetime.now().strftime("%Y-%m-%d")
-    progreso_local = page.client_storage.get("workout_progress") or {}
+    try:
+        raw_progress = page.client_storage.get("workout_progress")
+        progreso_local = raw_progress if isinstance(raw_progress, dict) else {}
+    except:
+        progreso_local = {}
     
-    # Si el progreso es de otro día o está vacío para hoy, intentar recuperar de Supabase
-    if progreso_local.get("fecha") != hoy_str or not progreso_local.get("completados"):
+    # Si el progreso es de otro día, de tipo incorrecto o está vacío para hoy, intentar recuperar de Supabase
+    if not isinstance(progreso_local.get("completados"), dict) or progreso_local.get("fecha") != hoy_str:
         # Intentamos restaurar de la nube (backup de seguridad)
-        datos_nube = db.get_workout_progress(client, user.id, hoy_str)
-        if datos_nube:
-            progreso_local = {"fecha": hoy_str, "completados": datos_nube}
-        else:
-            # Si no hay nada en la nube, inicializamos vacío para hoy
+        try:
+            datos_nube = db.get_workout_progress(client, user.id, hoy_str)
+            if datos_nube and isinstance(datos_nube, dict):
+                progreso_local = {"fecha": hoy_str, "completados": datos_nube}
+            else:
+                progreso_local = {"fecha": hoy_str, "completados": {}}
+        except:
             progreso_local = {"fecha": hoy_str, "completados": {}}
+        
         page.client_storage.set("workout_progress", progreso_local)
 
     # --- ELEMENTOS DE UI DINÁMICOS ---
