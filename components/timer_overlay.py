@@ -2,12 +2,13 @@ import flet as ft
 import time
 import threading
 
-class TimerOverlay(ft.Container):
+class TimerOverlay(ft.UserControl):
     def __init__(self):
+        super().__init__()
         self.txt_timer = ft.Text("60", size=40, weight="bold", color="black")
         self.pb_timer = ft.ProgressBar(value=1.0, width=150, color="black", bgcolor="white30")
         
-        super().__init__(
+        self.main_container = ft.Container(
             content=ft.Column([
                 ft.Text("DESCANSO", size=16, weight="bold", color="black"),
                 self.txt_timer,
@@ -19,24 +20,27 @@ class TimerOverlay(ft.Container):
             visible=False, animate_opacity=300, opacity=0
         )
 
+    def build(self):
+        return self.main_container
+
     def iniciar_descanso(self, segundos, page: ft.Page):
-        self.visible = True
-        self.opacity = 1
+        self.main_container.visible = True
+        self.main_container.opacity = 1
         page.update()
         
         for i in range(segundos, -1, -1):
-            if not self.visible: break
+            if not self.main_container.visible: break
             self.txt_timer.value = str(i)
             self.pb_timer.value = i / segundos
             page.update()
             time.sleep(1)
         
-        if self.visible:
+        if self.main_container.visible:
             self.txt_timer.value = "¡LISTO!"
             page.update()
             time.sleep(1)
-            self.opacity = 0
+            self.main_container.opacity = 0
             page.update()
             time.sleep(0.3)
-            self.visible = False
+            self.main_container.visible = False
             page.update()
