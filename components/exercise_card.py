@@ -21,7 +21,7 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
     txt_peso_hoy = ft.TextField(label="Kg", width=70, height=35, text_size=12, border_color="#FFD700")
 
     def internal_guardar_peso(e):
-        on_save_peso(ex.nombre, txt_peso_hoy, lbl_sugerencia)
+        on_save_peso(e, ex.nombre, txt_peso_hoy, lbl_sugerencia)
 
     return ft.Container(
         content=ft.Column([
