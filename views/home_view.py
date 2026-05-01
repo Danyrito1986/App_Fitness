@@ -1,12 +1,12 @@
 import flet as ft
 import db_manager as db
 from models import User
-
+from services.calculator import calculate_macros
 from supabase import Client
 
 def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_handler):
     """Vista de Dashboard principal."""
-    macros = user.get_macros()
+    macros = calculate_macros(user)
     stats = db.get_workout_stats(client, user.id)
     agua_hoy = db.get_daily_water(client, user.id)
 

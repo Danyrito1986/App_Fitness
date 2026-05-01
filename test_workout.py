@@ -1,5 +1,6 @@
 import unittest
 from models import User, Exercise
+from services.calculator import calculate_macros
 from datetime import datetime
 
 class TestFitnessLogic(unittest.TestCase):
@@ -20,7 +21,7 @@ class TestFitnessLogic(unittest.TestCase):
 
     def test_macro_calculations(self):
         """Verifica que los cálculos de macros no fallen y den valores razonables."""
-        macros = self.test_user.get_macros()
+        macros = calculate_macros(self.test_user)
         
         # Verificar claves presentes
         self.assertIn("cal", macros)
