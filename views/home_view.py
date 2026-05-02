@@ -82,7 +82,7 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
             ], alignment="center"),
             lbl_restante,
             lbl_detalle_agua,
-            ft.IconButton(icon="add_circle", icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
+            ft.Button(icon="add_circle", icon_color="#42A5F5", on_click=sumar_agua, style=ft.ButtonStyle(bgcolor=ft.colors.TRANSPARENT)),
         ], horizontal_alignment="center", spacing=5),
         padding=15, bgcolor="#1E1E1E", border_radius=20, width=220
     )
