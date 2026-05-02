@@ -12,7 +12,7 @@ class TimerOverlay(ft.Container):
         
         # Botón de cierre para permitir al usuario cancelar el descanso
         self.btn_close = ft.IconButton(
-            icon=ft.icons.CLOSE,
+            icon="close",
             icon_color="black",
             icon_size=20,
             on_click=self.cerrar_timer
@@ -25,16 +25,16 @@ class TimerOverlay(ft.Container):
                     self.txt_timer,
                     self.pb_timer
                 ], horizontal_alignment="center", spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                ft.Container(content=self.btn_close, alignment=ft.alignment.top_right, padding=ft.padding.only(right=-10, top=-10))
+                ft.Container(content=self.btn_close, alignment=ft.Alignment(1, -1), padding=ft.padding.only(right=-10, top=-10))
             ]),
             bgcolor="#FFD700", padding=20, border_radius=20, 
-            width=220, height=180, alignment=ft.alignment.center,
+            width=220, height=180, alignment=ft.Alignment(0, 0),
             shadow=ft.BoxShadow(blur_radius=20, color="black")
         )
         
         # Configuración del Container principal (anteriormente main_wrapper)
         self.content = self.timer_box
-        self.alignment = ft.alignment.center
+        self.alignment = ft.Alignment(0, 0)
         self.expand = True
         self.visible = False
         self.animate_opacity = 300

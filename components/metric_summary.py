@@ -22,7 +22,7 @@ class MetricSummary(ft.Container):
         self.bgcolor = "#1E1E1E"
         self.border_radius = 15
         self.width = max_width
-        self.border = ft.border.all(1, "white10")
+        self.border = ft.Border.all(1, "white10")
 
     def actualizar(self, res):
         self.lbl_tdee.value = f"TDEE: {res['tdee']} kcal"
