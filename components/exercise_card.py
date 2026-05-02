@@ -27,13 +27,13 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
         content=ft.Column([
             ft.Row([
                 ft.Text(ex.nombre, weight="bold", size=15, expand=True),
-                ft.Button(icon="timer", icon_color="#FFD700", on_click=lambda _: on_timer(ex.descanso))
+                ft.IconButton(icon="timer", icon_color="#FFD700", on_click=lambda _: on_timer(ex.descanso))
             ]),
             row_series,
             ft.Row([
                 ft.Column([ft.Text(f"Reps: {ex.reps}", size=11, color="white54"), lbl_sugerencia], expand=True),
                 txt_peso_hoy,
-                ft.Button(icon="save", icon_color="#4CAF50", on_click=internal_guardar_peso)
+                ft.IconButton(icon="save", icon_color="#4CAF50", on_click=internal_guardar_peso)
             ])
         ], spacing=8),
         padding=12, bgcolor="#1E1E1E", border_radius=12

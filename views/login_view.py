@@ -56,15 +56,15 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
             show_snackbar(f"Error al iniciar: {str(ex)}", True)
         page.update()
 
-    action_button = ft.Button(
-        content=ft.Text("Iniciar Sesión", color="white"),
-        style=ft.ButtonStyle(bgcolor="blue700"),
+    action_button = ft.ElevatedButton(
+        text="Iniciar Sesión",
+        style=ft.ButtonStyle(color="white", bgcolor="blue700"),
         on_click=handle_action,
         width=300
     )
     
     toggle_button = ft.TextButton(
-        content=ft.Text("¿No tienes cuenta? Regístrate"),
+        text="¿No tienes cuenta? Regístrate",
         on_click=toggle_mode
     )
 
