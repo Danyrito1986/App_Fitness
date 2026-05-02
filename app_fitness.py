@@ -20,10 +20,13 @@ def main(page: ft.Page):
     page.padding = 0
     
     # En Flet 1.0 (0.84.0+), las propiedades de ventana están en page.window
-    page.window.width = 420
-    page.window.height = 800
+    try:
+        page.window.width = 420
+        page.window.height = 800
+    except:
+        pass
 
-    # Pantalla de Carga Inicial (Para que Render detecte la app viva de inmediato)
+    # Pantalla de Carga Inicial
     loading_screen = ft.Container(
         content=ft.Column([
             ft.ProgressRing(color="#FFD700"),
@@ -65,7 +68,6 @@ def main(page: ft.Page):
     def update_view(index):
         if not user_actual: return
         
-        # Sistema de Caché Inteligente
         if index in vistas_cache and index != 2:
             content = vistas_cache[index]
         else:
@@ -140,17 +142,12 @@ def main(page: ft.Page):
                 print(f"INFO: Sesión recuperada para {session_user.nombre}")
                 user_actual = session_user
                 nav_bar.visible = True
-                # Primero añadimos el contenedor a la página
                 page.add(container_principal)
-                # Luego actualizamos su contenido
                 update_view(0)
             else:
                 print("INFO: No hay sesión activa, mostrando Login.")
-                # Primero añadimos el contenedor
                 page.add(container_principal)
-                # Luego cargamos el login
                 container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
-                page.update()
             
             page.update()
         except Exception as e:
@@ -162,7 +159,7 @@ def main(page: ft.Page):
                         ft.Icon("signal_wifi_off", size=60, color="red700"),
                         ft.Text("Error de conexión", size=20, weight="bold"),
                         ft.Text("No pudimos conectar con el servidor.\nRevisa tu internet.", text_align="center", color="white54"),
-                        ft.Button("Reintentar ahora", icon="refresh", on_click=inicializar_conexion)
+                        ft.ElevatedButton(text="Reintentar ahora", icon="refresh", on_click=inicializar_conexion)
                     ], horizontal_alignment="center", alignment="center"),
                     expand=True, alignment=ft.Alignment(0, 0)
                 )
