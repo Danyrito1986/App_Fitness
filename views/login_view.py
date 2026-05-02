@@ -8,9 +8,9 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
     is_login_mode = True
 
     # Componentes de UI
-    email_field = ft.TextField(label="Correo Electrónico", prefix_icon="email", width=300)
-    password_field = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, prefix_icon="lock", width=300)
-    name_field = ft.TextField(label="Nombre Completo", prefix_icon="person", width=300, visible=False)
+    email_field = ft.TextField(label="Correo Electrónico", prefix_icon=ft.icons.EMAIL, width=300)
+    password_field = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, prefix_icon=ft.icons.LOCK, width=300)
+    name_field = ft.TextField(label="Nombre Completo", prefix_icon=ft.icons.PERSON, width=300, visible=False)
     
     error_text = ft.Text(color="red", size=12)
     
@@ -18,8 +18,8 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
         nonlocal is_login_mode
         is_login_mode = not is_login_mode
         name_field.visible = not is_login_mode
-        action_button.content = ft.Text("Iniciar Sesión" if is_login_mode else "Registrarse", color="white")
-        toggle_button.content = ft.Text("¿No tienes cuenta? Regístrate" if is_login_mode else "¿Ya tienes cuenta? Inicia Sesión")
+        action_button.text = "Iniciar Sesión" if is_login_mode else "Registrarse"
+        toggle_button.text = "¿No tienes cuenta? Regístrate" if is_login_mode else "¿Ya tienes cuenta? Inicia Sesión"
         error_text.value = ""
         page.update()
 
@@ -33,45 +33,41 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
             return
             
         try:
-            print(f"Intentando login para: {email}")
             if is_login_mode:
                 res = db.login_user(client, email, password)
-                # Verificamos si el objeto tiene el atributo user (compatibilidad supabase-py)
-                user_obj = getattr(res, "user", None)
-                if user_obj:
+                if res.user:
                     show_snackbar("¡Bienvenido de nuevo! 👋")
                     on_login_success()
                 else:
-                    show_snackbar("Credenciales incorrectas o error de servidor.", True)
+                    show_snackbar("Credenciales incorrectas.", True)
             else:
                 if not nombre:
                     show_snackbar("El nombre es obligatorio.", True)
                     return
                 res = db.register_user(client, email, password, nombre)
-                if getattr(res, "user", None):
+                if res.user:
                     show_snackbar("Registro exitoso. ¡Inicia sesión! 🎉")
                     toggle_mode(None)
         except Exception as ex:
-            print(f"Error detallado en login: {ex}")
             show_snackbar(f"Error al iniciar: {str(ex)}", True)
         page.update()
 
     action_button = ft.ElevatedButton(
-        content=ft.Text("Iniciar Sesión", color="white"),
-        style=ft.ButtonStyle(bgcolor="blue700"),
+        text="Iniciar Sesión",
+        style=ft.ButtonStyle(color="white", bgcolor="blue700"),
         on_click=handle_action,
         width=300
     )
     
     toggle_button = ft.TextButton(
-        content=ft.Text("¿No tienes cuenta? Regístrate"),
+        text="¿No tienes cuenta? Regístrate",
         on_click=toggle_mode
     )
 
     return ft.Container(
         content=ft.Column(
             [
-                ft.Icon("fitness_center", size=80, color="blue700"),
+                ft.Icon(ft.icons.FITNESS_CENTER, size=80, color="blue700"),
                 ft.Text("Bienvenido a App Fitness", size=24, weight="bold"),
                 ft.Text("Tu entrenador personal en la nube", size=14, color="grey400"),
                 ft.Divider(height=20, color="transparent"),
@@ -87,5 +83,5 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
             alignment="center"
         ),
         expand=True,
-        alignment=ft.Alignment(0, 0)
+        alignment=ft.alignment.center
     )

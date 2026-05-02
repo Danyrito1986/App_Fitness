@@ -19,12 +19,9 @@ def main(page: ft.Page):
     page.bgcolor = "#121212"
     page.padding = 0
     
-    # En Flet 1.0 (0.84.0+), las propiedades de ventana están en page.window
-    try:
-        page.window.width = 420
-        page.window.height = 800
-    except:
-        pass
+    # Revertir a propiedades clásicas de Flet 0.21.x
+    page.window_width = 420
+    page.window_height = 800
 
     # Pantalla de Carga Inicial
     loading_screen = ft.Container(
@@ -43,7 +40,6 @@ def main(page: ft.Page):
         page.snack_bar = ft.SnackBar(
             content=ft.Text(message, color="white"),
             bgcolor="red700" if is_error else "green700",
-            action="Cerrar",
             duration=3000
         )
         page.snack_bar.open = True
@@ -83,8 +79,7 @@ def main(page: ft.Page):
                 content = progress_view(page, client, user_actual, show_snackbar)
             else: return
             
-            if index != 2: # No cachear entrenamiento
-                vistas_cache[index] = content
+            if index != 2: vistas_cache[index] = content
 
         container_principal.content = content
         page.update()
@@ -92,17 +87,17 @@ def main(page: ft.Page):
     def on_nav_change(e):
         update_view(int(e.control.selected_index))
 
-    # RENOMBRADO: NavigationDestination -> NavigationBarDestination
+    # Revertir a ft.NavigationDestination
     nav_bar = ft.NavigationBar(
         bgcolor="#1E1E1E",
         selected_index=0,
         on_change=on_nav_change,
         destinations=[
-            ft.NavigationBarDestination(icon="home", label="Inicio"),
-            ft.NavigationBarDestination(icon="person", label="Perfil"),
-            ft.NavigationBarDestination(icon="fitness_center", label="Entreno"),
-            ft.NavigationBarDestination(icon="restaurant", label="Dieta"),
-            ft.NavigationBarDestination(icon="show_chart", label="Progreso"),
+            ft.NavigationDestination(icon="home", label="Inicio"),
+            ft.NavigationDestination(icon="person", label="Perfil"),
+            ft.NavigationDestination(icon="fitness_center", label="Entreno"),
+            ft.NavigationDestination(icon="restaurant", label="Dieta"),
+            ft.NavigationDestination(icon="show_chart", label="Progreso"),
         ],
         visible=False
     )
@@ -123,63 +118,47 @@ def main(page: ft.Page):
             show_snackbar(f"Error: {e}", True)
         page.update()
 
-    def inicializar_conexion(e=None):
-        """Conecta a Supabase con manejo de errores y reintento."""
+    def inicializar_conexion():
         nonlocal client, user_actual
-        
-        page.controls.clear()
-        page.add(loading_screen)
-        page.update()
-
         try:
-            print("INFO: Estableciendo conexión con Supabase...")
             client = db.get_supabase_client()
             session_user = db.get_user(client)
-            
             page.controls.clear()
-            
             if session_user:
-                print(f"INFO: Sesión recuperada para {session_user.nombre}")
                 user_actual = session_user
                 nav_bar.visible = True
                 page.add(container_principal)
                 update_view(0)
             else:
-                print("INFO: No hay sesión activa, mostrando Login.")
                 page.add(container_principal)
                 container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
-            
             page.update()
         except Exception as e:
-            print(f"ERROR CRÍTICO: {e}")
             page.controls.clear()
             page.add(
                 ft.Container(
                     content=ft.Column([
-                        ft.Icon("signal_wifi_off", size=60, color="red700"),
+                        ft.Icon(ft.icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
                         ft.Text("Error de conexión", size=20, weight="bold"),
-                        ft.Text("No pudimos conectar con el servidor.\nRevisa tu internet.", text_align="center", color="white54"),
-                        ft.Button(content=ft.Text("Reintentar ahora"), icon="refresh", on_click=inicializar_conexion)
+                        ft.ElevatedButton("Reintentar ahora", icon=ft.icons.REFRESH, on_click=lambda _: inicializar_conexion())
                     ], horizontal_alignment="center", alignment="center"),
-                    expand=True, alignment=ft.Alignment(0, 0)
+                    expand=True, alignment=ft.alignment.center
                 )
             )
             page.update()
 
-    # Disparar inicialización asíncrona
     threading.Thread(target=inicializar_conexion, daemon=True).start()
 
 if __name__ == "__main__":
     try:
-        # DEJAMOS QUE RENDER ASIGNE EL PUERTO DINÁMICAMENTE
-        port = int(os.environ.get("PORT", 8080))
+        # Volver al arranque clásico para Render
+        port = int(os.environ.get("PORT", 8551))
         
-        print(f"--- SERVIDOR FLET 1.0 INICIANDO (PUERTO DINÁMICO: {port}) ---")
-        
-        ft.run(
-            main,
-            host="0.0.0.0",
+        ft.app(
+            target=main,
+            view=None,
             port=port,
+            host="0.0.0.0",
             assets_dir="assets"
         )
     except Exception as e:

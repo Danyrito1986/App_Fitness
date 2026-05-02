@@ -11,11 +11,11 @@ class TimerOverlay(ft.Container):
         self.pb_timer = ft.ProgressBar(value=1.0, width=150, color="black", bgcolor="white30")
         
         # Botón de cierre para permitir al usuario cancelar el descanso
-        self.btn_close = ft.Button(
-            icon="close",
+        self.btn_close = ft.IconButton(
+            icon=ft.icons.CLOSE,
             icon_color="black",
-            on_click=self.cerrar_timer,
-            style=ft.ButtonStyle(bgcolor=ft.colors.TRANSPARENT)
+            icon_size=20,
+            on_click=self.cerrar_timer
         )
 
         self.timer_box = ft.Container(
@@ -25,16 +25,15 @@ class TimerOverlay(ft.Container):
                     self.txt_timer,
                     self.pb_timer
                 ], horizontal_alignment="center", spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                ft.Container(content=self.btn_close, alignment=ft.Alignment(1, -1), padding=ft.padding.only(right=-10, top=-10))
+                ft.Container(content=self.btn_close, alignment=ft.alignment.top_right, padding=ft.padding.only(right=-10, top=-10))
             ]),
             bgcolor="#FFD700", padding=20, border_radius=20, 
-            width=220, height=180, alignment=ft.Alignment(0, 0),
+            width=220, height=180, alignment=ft.alignment.center,
             shadow=ft.BoxShadow(blur_radius=20, color="black")
         )
         
-        # Configuración del Container principal (anteriormente main_wrapper)
         self.content = self.timer_box
-        self.alignment = ft.Alignment(0, 0)
+        self.alignment = ft.alignment.center
         self.expand = True
         self.visible = False
         self.animate_opacity = 300
@@ -54,11 +53,9 @@ class TimerOverlay(ft.Container):
 
     def iniciar_descanso(self, segundos, page: ft.Page):
         """Inicia un nuevo ciclo de descanso, cancelando cualquier hilo anterior."""
-        # Generar un ID único para esta tarea
         my_id = str(uuid.uuid4())
         self.current_timer_id = my_id
         
-        # Validación de seguridad para el tiempo
         try:
             segundos = int(segundos)
         except:
@@ -67,7 +64,6 @@ class TimerOverlay(ft.Container):
         if segundos <= 0:
             return
 
-        # Mostrar el componente
         self.visible = True
         self.opacity = 1
         self.txt_timer.value = str(segundos)
@@ -79,14 +75,11 @@ class TimerOverlay(ft.Container):
             except:
                 pass
         
-        # Bucle del cronómetro
         for i in range(segundos, -1, -1):
-            # Verificación de ID: Si cambió, este hilo debe morir (fue reemplazado o cerrado)
             if self.current_timer_id != my_id: 
                 return
             
             self.txt_timer.value = str(i)
-            # Protección contra división por cero
             self.pb_timer.value = i / segundos if segundos > 0 else 0
             
             if self.page:
@@ -97,7 +90,6 @@ class TimerOverlay(ft.Container):
                 
             time.sleep(1)
         
-        # Finalización exitosa
         if self.current_timer_id == my_id:
             self.txt_timer.value = "¡LISTO!"
             if self.page:

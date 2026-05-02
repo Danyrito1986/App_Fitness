@@ -4,29 +4,26 @@ from models import User
 from supabase import Client
 
 def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
-    """Vista de progreso avanzada con gráfica evolutiva de peso."""
+    """Vista de progreso avanzada con gráfica evolutiva."""
     
     history = db.get_weight_history(client, user.id)
     
-    # --- PREPARACIÓN DE DATOS PARA LA GRÁFICA ---
     data_points = []
-    min_weight = 0
-    max_weight = 100
-    
+    min_weight = user.peso_actual - 5
+    max_weight = user.peso_actual + 5
+
     if history:
         weights = [h.peso for h in history]
-        min_weight = min(weights) - 5
-        max_weight = max(weights) + 5
+        min_weight = min(weights) - 2
+        max_weight = max(weights) + 2
         
-        # Tomar los últimos 10 registros para no saturar la gráfica
-        recent_history = history[-10:]
-        for i, h in enumerate(recent_history):
+        for i, h in enumerate(history):
             data_points.append(ft.LineChartDataPoint(i, h.peso))
-    
+
     # --- COMPONENTE DE GRÁFICA ---
     chart_container = ft.Container(
         content=ft.Text("Registra tu peso en el Perfil para ver tu evolución 📈", color="white54", text_align="center"),
-        padding=40, alignment=ft.Alignment(0, 0)
+        padding=40, alignment=ft.alignment.center
     )
     
     if len(data_points) > 1:
@@ -40,13 +37,13 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
                     stroke_cap_round=True,
                     below_line_bgcolor=ft.colors.with_opacity(0.1, "#FFD700"),
                     below_line_gradient=ft.LinearGradient(
-                        begin=ft.Alignment(0, -1),
-                        end=ft.Alignment(0, 1),
+                        begin=ft.alignment.top_center,
+                        end=ft.alignment.bottom_center,
                         colors=[ft.colors.with_opacity(0.3, "#FFD700"), ft.colors.TRANSPARENT],
                     ),
                 )
             ],
-            border=ft.Border.all(1, "white10"),
+            border=ft.border.all(1, "white10"),
             horizontal_grid_lines=ft.ChartGridLines(interval=2, color="white10", width=1),
             vertical_grid_lines=ft.ChartGridLines(interval=1, color="white10", width=1),
             min_y=min_weight,
@@ -64,10 +61,10 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
     elif len(data_points) == 1:
         chart_container = ft.Container(
             content=ft.Column([
-                ft.Icon("show_chart", size=40, color="white24"),
+                ft.Icon(ft.icons.SHOW_CHART, size=40, color="white24"),
                 ft.Text(f"Peso inicial: {history[0].peso}kg. ¡Sigue registrando para ver la curva!", color="white54", text_align="center")
             ], horizontal_alignment="center"),
-            padding=30, bgcolor="#1E1E1E", border_radius=15, alignment=ft.Alignment(0, 0)
+            padding=30, bgcolor="#1E1E1E", border_radius=15, alignment=ft.alignment.center
         )
 
     # --- LISTA DE REGISTROS RECIENTES ---
@@ -77,7 +74,7 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
             list_items.append(
                 ft.Container(
                     content=ft.Row([
-                        ft.Icon("monitor_weight", color="#FFD700", size=20),
+                        ft.Icon(ft.icons.MONITOR_WEIGHT, color="#FFD700", size=20),
                         ft.Text(f"{h.peso} kg", weight="bold", size=16),
                         ft.Text(f"{h.fecha.split('T')[0]}", color="white54", size=12, expand=True, text_align="right")
                     ]),
@@ -101,10 +98,9 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
         ft.Container(height=20),
         ft.Container(
             content=ft.Column([
-                ft.Row([ft.Icon("info_outline", size=16), ft.Text("Consejo PRO", weight="bold")]),
+                ft.Row([ft.Icon(ft.icons.INFO_OUTLINE, size=16), ft.Text("Consejo PRO", weight="bold")]),
                 ft.Text("Pésate siempre en ayunas, después de ir al baño, para obtener la medida más precisa.", size=12, color="white70")
             ], spacing=5),
-            padding=15, bgcolor="#0D47A133", border_radius=10, border=ft.Border.all(1, "#0D47A1")
+            padding=15, bgcolor="blue90033", border_radius=10, border=ft.border.all(1, "blue900")
         )
     ], scroll="auto", horizontal_alignment="center", spacing=10)
-

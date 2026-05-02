@@ -15,19 +15,18 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     metric_summary = MetricSummary(MAX_WIDTH)
 
     # --- CAMPOS DE ENTRADA ---
-    # Usamos anchos máximos y permitimos expansión para responsividad
-    txt_nombre = ft.TextField(label="Nombre", value=user.nombre, max_length=50, border_color="#FFD700", expand=True)
-    txt_edad = ft.TextField(label="Edad", value=str(user.edad), border_color="#FFD700", on_change=lambda _: calcular_en_vivo(), expand=1)
-    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), border_color="#FFD700", on_change=lambda _: calcular_en_vivo(), expand=1)
-    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), border_color="#FFD700", on_change=lambda _: calcular_en_vivo(), expand=1)
+    txt_nombre = ft.TextField(label="Nombre", value=user.nombre, max_length=50, border_color="#FFD700", width=MAX_WIDTH)
+    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
     
     dd_genero = ft.Dropdown(
         label="Género",
         value=user.genero,
         options=[ft.dropdown.Option("Hombre"), ft.dropdown.Option("Mujer")],
-        border_color="#FFD700", expand=True
+        border_color="#FFD700", width=MAX_WIDTH,
+        on_change=lambda _: actualizar_ui()
     )
-    dd_genero.on_change = lambda _: actualizar_ui()
 
     dd_nivel = ft.Dropdown(
         label="Nivel de Experiencia",
@@ -37,9 +36,9 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.dropdown.Option("Intermedio"),
             ft.dropdown.Option("Pro")
         ],
-        border_color="#FFD700", expand=True
+        border_color="#FFD700", width=MAX_WIDTH,
+        on_change=lambda _: calcular_en_vivo()
     )
-    dd_nivel.on_change = lambda _: calcular_en_vivo()
 
     dd_objetivo = ft.Dropdown(
         label="Objetivo Fitness",
@@ -49,20 +48,20 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.dropdown.Option("Definición / Quema de Grasa"),
             ft.dropdown.Option("Resistencia"),
         ],
-        border_color="#FFD700", expand=True
+        border_color="#FFD700", width=MAX_WIDTH,
+        on_change=lambda _: calcular_en_vivo()
     )
-    dd_objetivo.on_change = lambda _: calcular_en_vivo()
     
     # Medidas para Grasa Corporal
-    txt_cuello = ft.TextField(label="Cuello", value=str(user.cuello), border_color="#FFD700", on_change=lambda _: calcular_en_vivo(), expand=1)
-    txt_cintura = ft.TextField(label="Cintura", value=str(user.cintura), border_color="#FFD700", on_change=lambda _: calcular_en_vivo(), expand=1)
-    txt_cadera = ft.TextField(label="Cadera", value=str(user.cadera), border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo(), expand=1)
+    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=120, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo())
 
     # Medidas Adicionales de Control
-    txt_bicep = ft.TextField(label="Bícep", value=str(user.bicep), border_color="#2196F3", expand=1)
-    txt_pecho = ft.TextField(label="Pecho", value=str(user.pecho), border_color="#2196F3", expand=1)
-    txt_gluteo = ft.TextField(label="Glúteo", value=str(user.gluteo), border_color="#2196F3", expand=1)
-    txt_muslo = ft.TextField(label="Muslo", value=str(user.muslo), border_color="#2196F3", expand=1)
+    txt_bicep = ft.TextField(label="Bíceps", value=str(user.bicep), width=90, border_color="#2196F3")
+    txt_pecho = ft.TextField(label="Pecho", value=str(user.pecho), width=90, border_color="#2196F3")
+    txt_gluteo = ft.TextField(label="Glúteo", value=str(user.gluteo), width=90, border_color="#2196F3")
+    txt_muslo = ft.TextField(label="Muslo", value=str(user.muslo), width=90, border_color="#2196F3")
 
     def safe_float(value, default):
         try:
@@ -133,46 +132,31 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
     calcular_en_vivo(init=True)
 
-    # Contenedor principal con limitación de ancho para estética, pero responsivo
-    main_container = ft.Container(
-        content=ft.Column([
-            ft.Text("MI PERFIL FITNESS", size=24, weight="bold", color="#FFD700"),
-            
-            # Datos Básicos
-            ft.Column([
-                ft.Row([txt_nombre]),
-                ft.Row([dd_genero]),
-                ft.Row([dd_nivel]),
-                ft.Row([dd_objetivo]),
-                ft.Row([txt_edad, txt_peso, txt_altura], spacing=10),
-            ], spacing=15),
-            
-            ft.Divider(height=20, color="white12"),
-            ft.Text("MEDIDAS DE GRASA", size=14, weight="bold"),
-            ft.Row([txt_cuello, txt_cintura, txt_cadera], spacing=10),
-            
-            ft.Divider(height=20, color="white12"),
-            ft.Text("CONTROL VOLUMEN", size=14, weight="bold", color="#2196F3"),
-            ft.Row([txt_bicep, txt_pecho], spacing=10),
-            ft.Row([txt_gluteo, txt_muslo], spacing=10),
-            
-            metric_summary,
-            
-            ft.Button(
-                content=ft.Text("GUARDAR CAMBIOS", color="black"), 
-                icon="save", 
-                on_click=guardar_perfil,
-                style=ft.ButtonStyle(bgcolor="#FFD700"),
-                width=MAX_WIDTH, height=50
-            ),
-            ft.Container(height=20)
-        ], horizontal_alignment="center", spacing=15),
-        alignment=ft.Alignment(0, 0)
-    )
-
     return ft.Column([
         ft.Container(height=10),
-        main_container
+        ft.Text("MI PERFIL FITNESS", size=24, weight="bold", color="#FFD700"),
+        
+        ft.Column([
+            txt_nombre, dd_genero, dd_nivel, dd_objetivo,
+            ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", wrap=True),
+        ], horizontal_alignment="center", spacing=10),
+        
+        ft.Divider(height=20, color="white12"),
+        ft.Text("MEDIDAS DE GRASA", size=14, weight="bold"),
+        ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", wrap=True),
+        
+        ft.Divider(height=20, color="white12"),
+        ft.Text("CONTROL VOLUMEN", size=14, weight="bold", color="#2196F3"),
+        ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", wrap=True),
+        
+        metric_summary,
+        
+        ft.ElevatedButton(
+            "GUARDAR CAMBIOS", 
+            icon=ft.icons.SAVE, 
+            on_click=guardar_perfil,
+            style=ft.ButtonStyle(color="black", bgcolor="#FFD700"),
+            width=MAX_WIDTH, height=50
+        ),
+        ft.Container(height=20)
     ], expand=True, horizontal_alignment="center", scroll="adaptive")
-
-

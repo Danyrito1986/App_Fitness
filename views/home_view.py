@@ -11,19 +11,15 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
     agua_hoy = db.get_daily_water(client, user.id)
 
     # --- LÓGICA DE HIDRATACIÓN INTELIGENTE ---
-    # Base: 35ml por kg de peso
     meta_base = user.peso_actual * 0.035
-    
-    # Modificador por nivel
     multiplicador_nivel = {"Novato": 1.0, "Intermedio": 1.10, "Pro": 1.20}
     meta_ajustada = meta_base * multiplicador_nivel.get(user.nivel, 1.0)
     
-    # Modificador por objetivo (Definición requiere más agua)
     if user.objetivo == "Definición / Quema de Grasa":
         meta_ajustada *= 1.10
         
     meta_litros = round(meta_ajustada, 2)
-    consumo_actual_l = round(agua_hoy * 0.25, 2) # Cada vaso son 250ml
+    consumo_actual_l = round(agua_hoy * 0.25, 2)
     restante_l = max(0, round(meta_litros - consumo_actual_l, 2))
 
     lbl_restante = ft.Text(
@@ -77,12 +73,12 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
     widget_agua = ft.Container(
         content=ft.Column([
             ft.Row([
-                ft.Icon("water_drop", color="#42A5F5"),
+                ft.Icon(ft.icons.WATER_DROP, color="#42A5F5"),
                 ft.Text("Hidratación", weight="bold"),
-            ], alignment="center"),
+            ], alignment=ft.MainAxisAlignment.CENTER),
             lbl_restante,
             lbl_detalle_agua,
-            ft.Button(icon="add_circle", icon_color="#42A5F5", on_click=sumar_agua, style=ft.ButtonStyle(bgcolor=ft.colors.TRANSPARENT)),
+            ft.IconButton(ft.icons.ADD_CIRCLE, icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
         ], horizontal_alignment="center", spacing=5),
         padding=15, bgcolor="#1E1E1E", border_radius=20, width=220
     )
@@ -91,11 +87,11 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
         header,
         ft.Row([card_calorias], spacing=15),
         ft.Container(height=10),
-        ft.Row([widget_agua], spacing=15, alignment="center"),
+        ft.Row([widget_agua], spacing=15, alignment=ft.MainAxisAlignment.CENTER),
         ft.Container(height=10),
         ft.TextButton(
-            content=ft.Text("CERRAR SESIÓN"), 
-            icon="logout", 
+            "CERRAR SESIÓN", 
+            icon=ft.icons.LOGOUT, 
             on_click=lambda _: logout_handler(),
             style=ft.ButtonStyle(color="red400")
         ),

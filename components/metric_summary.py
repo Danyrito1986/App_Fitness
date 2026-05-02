@@ -10,7 +10,6 @@ class MetricSummary(ft.Container):
         self.lbl_bf = ft.Text("% Grasa: --", size=16, color="white70")
         self.lbl_masa_magra = ft.Text("Masa Magra: -- kg", size=14, color="white38")
 
-        # Configuración del Container (antes era el retorno de build)
         self.content = ft.Column([
             ft.Row([self.lbl_tdee, self.lbl_ajuste], alignment="center", spacing=20),
             ft.Divider(height=1, color="white10"),
@@ -22,7 +21,7 @@ class MetricSummary(ft.Container):
         self.bgcolor = "#1E1E1E"
         self.border_radius = 15
         self.width = max_width
-        self.border = ft.Border.all(1, "white10")
+        self.border = ft.border.all(1, "white10")
 
     def actualizar(self, res):
         self.lbl_tdee.value = f"TDEE: {res['tdee']} kcal"

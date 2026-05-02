@@ -25,7 +25,6 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         dia_seleccionado = 1
         nivel_seleccionado = user.nivel
         
-        # Intentar cargar progreso guardado de hoy con validación robusta
         hoy_str = datetime.now().strftime("%Y-%m-%d")
         try:
             raw_progress = page.client_storage.get("workout_progress")
@@ -34,7 +33,6 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             print(f"DEBUG_ERR: Error leyendo client_storage: {e}")
             progreso_local = {}
         
-        # Si el progreso es de otro día, de tipo incorrecto o está vacío para hoy, intentar recuperar de Supabase
         if not isinstance(progreso_local.get("completados"), dict) or progreso_local.get("fecha") != hoy_str:
             try:
                 datos_nube = db.get_workout_progress(client, user.id, hoy_str)
@@ -51,10 +49,8 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             except Exception as e:
                 print(f"DEBUG_ERR: Error escribiendo en client_storage (init): {e}")
 
-        # --- ELEMENTOS DE UI DINÁMICOS ---
         lista_ejercicios = ft.Column(spacing=15, horizontal_alignment="center")
 
-        # --- LÓGICA DE PERSISTENCIA ---
         def guardar_progreso_serie(ex_id, serie_idx, valor, t_descanso):
             try:
                 key = f"{mes_seleccionado}_{dia_seleccionado}_{ex_id}"
@@ -64,19 +60,16 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 if valor:
                     if serie_idx not in progreso_local["completados"][key]:
                         progreso_local["completados"][key].append(serie_idx)
-                    # Iniciar descanso
                     threading.Thread(target=timer_overlay.iniciar_descanso, args=(t_descanso, page), daemon=True).start()
                 else:
                     if serie_idx in progreso_local["completados"][key]:
                         progreso_local["completados"][key].remove(serie_idx)
                 
-                # Guardar localmente con blindaje
                 try:
                     page.client_storage.set("workout_progress", progreso_local)
                 except Exception as e:
                     print(f"DEBUG_ERR: Error persistencia local: {e}")
                 
-                # BLINDAJE DE CONCURRENCIA: Clonar datos antes de enviar a la nube
                 datos_a_guardar = copy.deepcopy(progreso_local["completados"])
                 threading.Thread(
                     target=db.save_workout_progress, 
@@ -109,7 +102,6 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         def on_timer_click(t):
             threading.Thread(target=timer_overlay.iniciar_descanso, args=(t, page), daemon=True).start()
 
-        # --- FUNCIONES DE ACTUALIZACIÓN ---
         def set_mes(n):
             nonlocal mes_seleccionado
             mes_seleccionado = n
@@ -152,11 +144,10 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
             if not init: page.update()
 
-        # --- COMPONENTES DE NAVEGACIÓN ---
         row_meses = ft.Row(scroll="auto", spacing=10)
         def actualizar_ui_meses():
             row_meses.controls = [
-                ft.Button(
+                ft.ElevatedButton(
                     f"MES {i}", 
                     on_click=lambda e, n=i: set_mes(n) if n <= user.mes_actual else show_snackbar("Mes bloqueado", True),
                     style=ft.ButtonStyle(
@@ -170,7 +161,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         def actualizar_ui_dias():
             row_dias.controls = [
                 ft.TextButton(
-                    content=ft.Text(f"DÍA {i}"), 
+                    f"DÍA {i}", 
                     on_click=lambda e, n=i: update_workout_list(n),
                     style=ft.ButtonStyle(
                         color="#FFD700" if i == dia_seleccionado else "white54"
@@ -178,11 +169,9 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 ) for i in range(1, 6)
             ]
 
-        # --- INICIALIZACIÓN ---
         actualizar_ui_meses()
         update_workout_list(init=True)
 
-        # --- ESTRUCTURA FINAL DEL LAYOUT ---
         content_area = ft.Container(
             content=ft.Column([
                 ft.Text("ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
@@ -194,11 +183,12 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 cardio_panel,
                 lista_ejercicios,
                 ft.Container(height=20),
-                ft.Button(content=ft.Text("FINALIZAR ENTRENAMIENTO"), icon="check_circle", on_click=finalizar_entreno,
+                ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon=ft.icons.CHECK_CIRCLE, on_click=finalizar_entreno,
                                 style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
                 ft.Container(height=40)
-            ], horizontal_alignment="center", scroll="adaptive"),
-            expand=True
+            ], horizontal_alignment="center"),
+            expand=True,
+            scroll="adaptive"
         )
 
         return ft.Stack([
@@ -210,11 +200,10 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         print(f"FATAL_ERROR_VIEW: {e}")
         return ft.Container(
             content=ft.Column([
-                ft.Icon("error_outline", color="red", size=50),
+                ft.Icon(ft.icons.ERROR_OUTLINE, color="red", size=50),
                 ft.Text("Error al cargar el módulo de entrenamiento.", color="white", size=18, weight="bold"),
                 ft.Text(f"Detalle: {str(e)}", color="white54", text_align="center"),
-                ft.Button(content=ft.Text("Reintentar"), on_click=lambda _: page.go("/workout"))
+                ft.ElevatedButton("Reintentar", on_click=lambda _: page.go("/workout"))
             ], alignment="center", horizontal_alignment="center"),
             expand=True, bgcolor="#121212", padding=40
         )
-
