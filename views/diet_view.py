@@ -87,7 +87,7 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
                             ft.Row([ft.Icon(ali['c']['icon'], size=16, color="white54"), ft.Text(ali['c']['desc'], size=13)]),
                             ft.Row([ft.Icon(ali['g']['icon'], size=16, color="white54"), ft.Text(ali['g']['desc'], size=13)]),
                         ], spacing=8),
-                        padding=ft.padding.only(left=20, right=20, bottom=20)
+                        padding=ft.Padding(left=20, right=20, bottom=20, top=0)
                     )
                 ]),
                 bgcolor="#1E1E1E", border_radius=15
@@ -120,9 +120,9 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
             content=ft.Container(
                 content=ft.Column([
                     ft.ListTile(leading=ft.Icon("auto_awesome", color="#FFD700"), title=ft.Text("SUPLEMENTACIÓN", weight="bold", size=18)),
-                    ft.Container(content=ft.Column(items, spacing=15), padding=ft.padding.only(left=20, right=20, bottom=25))
+                    ft.Container(content=ft.Column(items, spacing=15), padding=ft.Padding(left=20, right=20, bottom=25, top=0))
                 ]),
-                bgcolor="#1E1E1E", border_radius=15, border=ft.border.all(1, "#FFD70033")
+                bgcolor="#1E1E1E", border_radius=15, border=ft.Border.all(1, "#FFD70033")
             )
         )
 
@@ -140,7 +140,7 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 ft.Column([ft.Text("Carbs", size=10, color="white54"), ft.Text(f"{c}g", weight="bold", color="#2196F3")]),
                 ft.Column([ft.Text("Grasa", size=10, color="white54"), ft.Text(f"{f}g", weight="bold", color="#FFD700")]),
             ], alignment="space-around"),
-            padding=15, bgcolor="#121212", border_radius=15, border=ft.border.all(1, "white10")
+            padding=15, bgcolor="#121212", border_radius=15, border=ft.Border.all(1, "white10")
         ),
 
         card_comida_detallada("Desayuno", 0.30, "brunch_dining"),

@@ -158,7 +158,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             
             metric_summary,
             
-            ft.ElevatedButton(
+            ft.Button(
                 "GUARDAR CAMBIOS", 
                 icon="save", 
                 on_click=guardar_perfil,

@@ -171,17 +171,15 @@ if __name__ == "__main__":
     try:
         port = int(os.environ.get("PORT", 8551))
         
-        # FORZAR BINDING PARA RENDER (Garantiza que use 0.0.0.0 y el puerto correcto)
+        # CONFIGURACIÓN PARA FLET 1.0+ (ASGI / UVICORN)
         os.environ["FLET_SERVER_IP"] = "0.0.0.0"
         os.environ["FLET_SERVER_PORT"] = str(port)
         
-        print(f"--- INICIANDO SERVIDOR WEB EN 0.0.0.0:{port} ---")
+        print(f"--- INICIANDO SERVIDOR FLET 1.0 (UVICORN) EN 0.0.0.0:{port} ---")
         
-        ft.app(
-            target=main, 
-            view=None, # IMPORTANTE: 'None' deshabilita apertura de ventanas y activa modo servidor
-            port=port, 
-            host="0.0.0.0", 
+        # En Flet 0.84.0+, ft.run() detecta automáticamente el entorno web/headless
+        ft.run(
+            main,
             assets_dir="assets"
         )
     except Exception as e:

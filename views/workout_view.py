@@ -156,7 +156,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         row_meses = ft.Row(scroll="auto", spacing=10)
         def actualizar_ui_meses():
             row_meses.controls = [
-                ft.ElevatedButton(
+                ft.Button(
                     f"MES {i}", 
                     on_click=lambda e, n=i: set_mes(n) if n <= user.mes_actual else show_snackbar("Mes bloqueado", True),
                     style=ft.ButtonStyle(
@@ -194,7 +194,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 cardio_panel,
                 lista_ejercicios,
                 ft.Container(height=20),
-                ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon="check_circle", on_click=finalizar_entreno,
+                ft.Button("FINALIZAR ENTRENAMIENTO", icon="check_circle", on_click=finalizar_entreno,
                                 style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
                 ft.Container(height=40)
             ], horizontal_alignment="center", scroll="adaptive"),
@@ -213,7 +213,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 ft.Icon("error_outline", color="red", size=50),
                 ft.Text("Error al cargar el módulo de entrenamiento.", color="white", size=18, weight="bold"),
                 ft.Text(f"Detalle: {str(e)}", color="white54", text_align="center"),
-                ft.ElevatedButton("Reintentar", on_click=lambda _: page.go("/workout"))
+                ft.Button("Reintentar", on_click=lambda _: page.go("/workout"))
             ], alignment="center", horizontal_alignment="center"),
             expand=True, bgcolor="#121212", padding=40
         )
