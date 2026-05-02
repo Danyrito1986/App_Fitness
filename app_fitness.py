@@ -64,7 +64,8 @@ def main(page: ft.Page):
         if not user_actual: return
         
         # Sistema de Caché Inteligente: Evita perder datos temporales al cambiar de pestaña
-        if index in vistas_cache:
+        # NOTA: Desactivamos el caché para Entrenamiento (index 2) por estabilidad de renderizado (Stack/Timer)
+        if index in vistas_cache and index != 2:
             content = vistas_cache[index]
         else:
             if index == 0:
@@ -72,13 +73,16 @@ def main(page: ft.Page):
             elif index == 1:
                 content = profile_view(page, client, user_actual, show_snackbar)
             elif index == 2:
+                # El módulo de entrenamiento se regenera para evitar fallos de Stack/UserControl en PWA
                 content = workout_view(page, client, user_actual, show_snackbar)
             elif index == 3:
                 content = diet_view(page, client, user_actual, show_snackbar)
             elif index == 4:
                 content = progress_view(page, client, user_actual, show_snackbar)
             else: return
-            vistas_cache[index] = content
+            
+            if index != 2: # No cachear entrenamiento
+                vistas_cache[index] = content
 
         container_principal.content = content
         page.update()
