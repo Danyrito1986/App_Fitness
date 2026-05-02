@@ -94,7 +94,7 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
         ft.Row([widget_agua], spacing=15, alignment="center"),
         ft.Container(height=10),
         ft.TextButton(
-            "CERRAR SESIÓN", 
+            content=ft.Text("CERRAR SESIÓN"), 
             icon="logout", 
             on_click=lambda _: logout_handler(),
             style=ft.ButtonStyle(color="red400")

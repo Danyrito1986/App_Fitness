@@ -159,7 +159,7 @@ def main(page: ft.Page):
                         ft.Icon("signal_wifi_off", size=60, color="red700"),
                         ft.Text("Error de conexión", size=20, weight="bold"),
                         ft.Text("No pudimos conectar con el servidor.\nRevisa tu internet.", text_align="center", color="white54"),
-                        ft.ElevatedButton(text="Reintentar ahora", icon="refresh", on_click=inicializar_conexion)
+                        ft.ElevatedButton(content=ft.Text("Reintentar ahora"), icon="refresh", on_click=inicializar_conexion)
                     ], horizontal_alignment="center", alignment="center"),
                     expand=True, alignment=ft.Alignment(0, 0)
                 )

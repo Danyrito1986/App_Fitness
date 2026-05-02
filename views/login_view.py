@@ -18,8 +18,8 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
         nonlocal is_login_mode
         is_login_mode = not is_login_mode
         name_field.visible = not is_login_mode
-        action_button.text = "Iniciar Sesión" if is_login_mode else "Registrarse"
-        toggle_button.text = "¿No tienes cuenta? Regístrate" if is_login_mode else "¿Ya tienes cuenta? Inicia Sesión"
+        action_button.content = ft.Text("Iniciar Sesión" if is_login_mode else "Registrarse", color="white")
+        toggle_button.content = ft.Text("¿No tienes cuenta? Regístrate" if is_login_mode else "¿Ya tienes cuenta? Inicia Sesión")
         error_text.value = ""
         page.update()
 
@@ -57,14 +57,14 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
         page.update()
 
     action_button = ft.ElevatedButton(
-        text="Iniciar Sesión",
-        style=ft.ButtonStyle(color="white", bgcolor="blue700"),
+        content=ft.Text("Iniciar Sesión", color="white"),
+        style=ft.ButtonStyle(bgcolor="blue700"),
         on_click=handle_action,
         width=300
     )
     
     toggle_button = ft.TextButton(
-        text="¿No tienes cuenta? Regístrate",
+        content=ft.Text("¿No tienes cuenta? Regístrate"),
         on_click=toggle_mode
     )
 

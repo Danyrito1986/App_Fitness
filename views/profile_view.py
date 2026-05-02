@@ -159,10 +159,10 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             metric_summary,
             
             ft.Button(
-                "GUARDAR CAMBIOS", 
+                content=ft.Text("GUARDAR CAMBIOS", color="black"), 
                 icon="save", 
                 on_click=guardar_perfil,
-                style=ft.ButtonStyle(color="black", bgcolor="#FFD700"),
+                style=ft.ButtonStyle(bgcolor="#FFD700"),
                 width=MAX_WIDTH, height=50
             ),
             ft.Container(height=20)
