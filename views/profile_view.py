@@ -9,22 +9,24 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de perfil avanzada con cálculos de grasa y masa muscular responsiva."""
     
     # --- CONFIGURACIÓN DE ANCHO RESPONSIVO ---
-    MAX_WIDTH = 380
+    # Usamos un ancho máximo pero permitimos que se encoja en pantallas muy pequeñas
+    MAX_WIDTH = 400
 
     # --- COMPONENTES ---
     metric_summary = MetricSummary(MAX_WIDTH)
 
     # --- CAMPOS DE ENTRADA ---
-    txt_nombre = ft.TextField(label="Nombre", value=user.nombre, max_length=50, width=MAX_WIDTH, border_color="#FFD700")
-    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    # Eliminamos anchos fijos agresivos para que el layout fluya mejor
+    txt_nombre = ft.TextField(label="Nombre", value=user.nombre, max_length=50, border_color="#FFD700", width=MAX_WIDTH)
+    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
     
     dd_genero = ft.Dropdown(
         label="Género",
         value=user.genero,
         options=[ft.dropdown.Option("Hombre"), ft.dropdown.Option("Mujer")],
-        width=MAX_WIDTH, border_color="#FFD700",
+        border_color="#FFD700", width=MAX_WIDTH,
         on_change=lambda _: actualizar_ui()
     )
 
@@ -36,7 +38,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.dropdown.Option("Intermedio"),
             ft.dropdown.Option("Pro")
         ],
-        width=MAX_WIDTH, border_color="#FFD700",
+        border_color="#FFD700", width=MAX_WIDTH,
         on_change=lambda _: calcular_en_vivo()
     )
 
@@ -48,20 +50,20 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.dropdown.Option("Definición / Quema de Grasa"),
             ft.dropdown.Option("Resistencia"),
         ],
-        width=MAX_WIDTH, border_color="#FFD700",
+        border_color="#FFD700", width=MAX_WIDTH,
         on_change=lambda _: calcular_en_vivo()
     )
     
     # Medidas para Grasa Corporal
-    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=110, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=110, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo())
+    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=120, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo())
 
     # Medidas Adicionales de Control
-    txt_bicep = ft.TextField(label="Bíceps (cm)", value=str(user.bicep), width=110, border_color="#2196F3")
-    txt_pecho = ft.TextField(label="Pecho (cm)", value=str(user.pecho), width=110, border_color="#2196F3")
-    txt_gluteo = ft.TextField(label="Glúteo (cm)", value=str(user.gluteo), width=110, border_color="#2196F3")
-    txt_muslo = ft.TextField(label="Muslo (cm)", value=str(user.muslo), width=110, border_color="#2196F3")
+    txt_bicep = ft.TextField(label="Bíceps", value=str(user.bicep), width=90, border_color="#2196F3")
+    txt_pecho = ft.TextField(label="Pecho", value=str(user.pecho), width=90, border_color="#2196F3")
+    txt_gluteo = ft.TextField(label="Glúteo", value=str(user.gluteo), width=90, border_color="#2196F3")
+    txt_muslo = ft.TextField(label="Muslo", value=str(user.muslo), width=90, border_color="#2196F3")
 
     def safe_float(value, default):
         try:

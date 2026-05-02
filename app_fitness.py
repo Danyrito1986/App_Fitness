@@ -48,12 +48,14 @@ def main(page: ft.Page):
     container_principal = ft.Container(expand=True, padding=15, bgcolor="#121212")
     user_actual = None
     client = None
+    vistas_cache = {}
 
     def logout_handler():
         nonlocal user_actual
         if client:
             db.logout_user(client)
         user_actual = None
+        vistas_cache.clear()
         nav_bar.visible = False
         container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
         page.update()
@@ -61,17 +63,22 @@ def main(page: ft.Page):
     def update_view(index):
         if not user_actual: return
         
-        if index == 0:
-            content = home_view(page, client, user_actual, show_snackbar, logout_handler)
-        elif index == 1:
-            content = profile_view(page, client, user_actual, show_snackbar)
-        elif index == 2:
-            content = workout_view(page, client, user_actual, show_snackbar)
-        elif index == 3:
-            content = diet_view(page, client, user_actual, show_snackbar)
-        elif index == 4:
-            content = progress_view(page, client, user_actual, show_snackbar)
-        else: return
+        # Sistema de Caché Inteligente: Evita perder datos temporales al cambiar de pestaña
+        if index in vistas_cache:
+            content = vistas_cache[index]
+        else:
+            if index == 0:
+                content = home_view(page, client, user_actual, show_snackbar, logout_handler)
+            elif index == 1:
+                content = profile_view(page, client, user_actual, show_snackbar)
+            elif index == 2:
+                content = workout_view(page, client, user_actual, show_snackbar)
+            elif index == 3:
+                content = diet_view(page, client, user_actual, show_snackbar)
+            elif index == 4:
+                content = progress_view(page, client, user_actual, show_snackbar)
+            else: return
+            vistas_cache[index] = content
 
         container_principal.content = content
         page.update()
@@ -99,6 +106,7 @@ def main(page: ft.Page):
         try:
             user_actual = db.get_user(client)
             if user_actual:
+                vistas_cache.clear() # Reset cache al loguear
                 nav_bar.visible = True
                 nav_bar.selected_index = 0
                 update_view(0)
@@ -108,15 +116,20 @@ def main(page: ft.Page):
             show_snackbar(f"Error: {e}", True)
         page.update()
 
-    def inicializar_conexion():
-        """Conecta a Supabase en segundo plano sin bloquear el arranque."""
+    def inicializar_conexion(e=None):
+        """Conecta a Supabase con manejo de errores y reintento."""
         nonlocal client, user_actual
+        
+        # Mostrar carga si es un reintento
+        page.controls.clear()
+        page.add(loading_screen)
+        page.update()
+
         try:
             print("INFO: Estableciendo conexión con Supabase...")
             client = db.get_supabase_client()
             session_user = db.get_user(client)
             
-            # Limpiar pantalla de carga
             page.controls.clear()
             
             if session_user:
@@ -134,7 +147,17 @@ def main(page: ft.Page):
         except Exception as e:
             print(f"ERROR CRÍTICO: {e}")
             page.controls.clear()
-            page.add(ft.Text(f"Error de conexión: {e}", color="red"))
+            page.add(
+                ft.Container(
+                    content=ft.Column([
+                        ft.Icon(ft.icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
+                        ft.Text("Error de conexión", size=20, weight="bold"),
+                        ft.Text("No pudimos conectar con el servidor.\nRevisa tu internet.", text_align="center", color="white54"),
+                        ft.ElevatedButton("Reintentar ahora", icon=ft.icons.REFRESH, on_click=inicializar_conexion)
+                    ], horizontal_alignment="center", alignment="center"),
+                    expand=True, alignment=ft.alignment.center
+                )
+            )
             page.update()
 
     # Disparar inicialización asíncrona

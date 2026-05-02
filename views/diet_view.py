@@ -31,31 +31,42 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
     nombres_dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
     def get_alimentos_dinamicos(p_comida, c_comida, f_comida, tipo_comida):
-        """Calcula gramos de alimentos basados en el día y el TIEMPO de comida."""
+        """Calcula gramos de alimentos basados en el día y el TIEMPO de comida con manejo de errores."""
         try:
-            indices = matriz[dia_semana][tipo_comida]
-            f_p = fuentes["proteina"][indices["p"]]
-            f_c = fuentes["carbo"][indices["c"]]
-            f_g = fuentes["grasa"][indices["g"]]
-        except Exception:
-            return {"p": {"desc": "Error", "icon": "error"}, "c": {"desc": "Error", "icon": "error"}, "g": {"desc": "Error", "icon": "error"}}
+            indices = matriz.get(dia_semana, {}).get(tipo_comida)
+            if not indices:
+                raise ValueError("No hay índices para esta comida")
 
-        # Cálculo de gramos
-        gr_p = int((p_comida / f_p["p"]) * 100)
-        gr_c = int((c_comida / f_c["c"]) * 100)
-        gr_g = int((f_comida / f_g["g"]) * 100)
+            f_p = fuentes["proteina"][indices.get("p", 0)]
+            f_c = fuentes["carbo"][indices.get("c", 0)]
+            f_g = fuentes["grasa"][indices.get("g", 0)]
+        except Exception as e:
+            print(f"WARN: Error en get_alimentos_dinamicos: {e}")
+            return {
+                "p": {"desc": "Proteína no disponible", "icon": "info"},
+                "c": {"desc": "Carbohidrato no disponible", "icon": "info"},
+                "g": {"desc": "Grasa no disponible", "icon": "info"}
+            }
+
+        # Cálculo de gramos con protección contra división por cero
+        try:
+            gr_p = int((p_comida / f_p["p"]) * 100) if f_p.get("p", 0) > 0 else 0
+            gr_c = int((c_comida / f_c["c"]) * 100) if f_c.get("c", 0) > 0 else 0
+            gr_g = int((f_comida / f_g["g"]) * 100) if f_g.get("g", 0) > 0 else 0
+        except:
+            gr_p, gr_c, gr_g = 0, 0, 0
 
         # Formateo
         desc_c = f"{gr_c}g de {f_c['nombre']}"
         if f_c["nombre"] == "Tortilla de Maíz":
-            desc_c = f"{round(c_comida/15, 1)} unidades de {f_c['nombre']}"
+            desc_c = f"{round(c_comida/15, 1) if c_comida else 0} unidades de {f_c['nombre']}"
         elif f_c["nombre"] == "Pan Integral":
-            desc_c = f"{round(c_comida/15, 1)} rebanadas de {f_c['nombre']}"
+            desc_c = f"{round(c_comida/15, 1) if c_comida else 0} rebanadas de {f_c['nombre']}"
 
         return {
-            "p": {"desc": f"{gr_p}g de {f_p['nombre']}", "icon": f_p["icon"]},
-            "c": {"desc": desc_c, "icon": f_c["icon"]},
-            "g": {"desc": f"{gr_g}g de {f_g['nombre']} / Semillas", "icon": f_g["icon"]}
+            "p": {"desc": f"{gr_p}g de {f_p['nombre']}", "icon": f_p.get("icon", "restaurant")},
+            "c": {"desc": desc_c, "icon": f_c.get("icon", "bakery_dining")},
+            "g": {"desc": f"{gr_g}g de {f_g['nombre']} / Semillas", "icon": f_g.get("icon", "water_drop")}
         }
 
     def card_comida_detallada(nombre, pct, icono_comida):

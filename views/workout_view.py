@@ -63,7 +63,15 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             if serie_idx in progreso_local["completados"][key]:
                 progreso_local["completados"][key].remove(serie_idx)
         
+        # Guardar localmente
         page.client_storage.set("workout_progress", progreso_local)
+        
+        # GUARDADO EN TIEMPO REAL (NUBE) - En segundo plano para no congelar la UI
+        threading.Thread(
+            target=db.save_workout_progress, 
+            args=(client, user.id, hoy_str, progreso_local["completados"]),
+            daemon=True
+        ).start()
 
     def obtener_progreso_serie(ex_id, serie_idx):
         key = f"{mes_seleccionado}_{dia_seleccionado}_{ex_id}"
@@ -162,20 +170,27 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
     return ft.Stack([
         ft.Column([
-            ft.Text("ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
-            status_header,
-            ft.Divider(height=10, color="transparent"),
-            row_meses,
-            ft.Divider(height=10, color="white12"),
-            row_dias,
-            cardio_panel,
-            ft.Container(content=lista_ejercicios, expand=True),
-            ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon="check_circle", on_click=finalizar_entreno,
-                              style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
-            ft.Container(height=20)
-        ], expand=True, horizontal_alignment="center", scroll="adaptive"),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
+                    status_header,
+                    ft.Divider(height=10, color="transparent"),
+                    row_meses,
+                    ft.Divider(height=10, color="white12"),
+                    row_dias,
+                    cardio_panel,
+                    lista_ejercicios,
+                    ft.Container(height=20),
+                    ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon="check_circle", on_click=finalizar_entreno,
+                                      style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
+                    ft.Container(height=40)
+                ], horizontal_alignment="center"),
+                expand=True,
+                scroll="adaptive"
+            )
+        ], expand=True),
         
-        # Overlay del Cronómetro (ahora maneja su propia expansión y visibilidad)
+        # Overlay del Cronómetro
         timer_overlay
     ])
 
