@@ -3,7 +3,7 @@ import time
 import threading
 import uuid
 
-class TimerOverlay(ft.UserControl):
+class TimerOverlay(ft.Container):
     def __init__(self):
         super().__init__()
         self.current_timer_id = None
@@ -32,28 +32,24 @@ class TimerOverlay(ft.UserControl):
             shadow=ft.BoxShadow(blur_radius=20, color="black")
         )
         
-        self.main_wrapper = ft.Container(
-            content=self.timer_box,
-            alignment=ft.alignment.center,
-            expand=True,
-            visible=False,
-            animate_opacity=300,
-            opacity=0,
-            bgcolor="#44000000" # Fondo semi-transparente para mayor enfoque
-        )
-
-    def build(self):
-        return self.main_wrapper
+        # Configuración del Container principal (anteriormente main_wrapper)
+        self.content = self.timer_box
+        self.alignment = ft.alignment.center
+        self.expand = True
+        self.visible = False
+        self.animate_opacity = 300
+        self.opacity = 0
+        self.bgcolor = "#44000000"
 
     def cerrar_timer(self, e=None):
         """Detiene el cronómetro actual y oculta el componente."""
         self.current_timer_id = None 
-        self.main_wrapper.opacity = 0
-        self.main_wrapper.visible = False
+        self.opacity = 0
+        self.visible = False
         try:
             self.update()
         except:
-            pass # Si el componente ya no está en la página
+            pass
 
     def iniciar_descanso(self, segundos, page: ft.Page):
         """Inicia un nuevo ciclo de descanso, cancelando cualquier hilo anterior."""
@@ -71,15 +67,15 @@ class TimerOverlay(ft.UserControl):
             return
 
         # Mostrar el componente
-        self.main_wrapper.visible = True
-        self.main_wrapper.opacity = 1
+        self.visible = True
+        self.opacity = 1
         self.txt_timer.value = str(segundos)
         self.pb_timer.value = 1.0
         
         try:
             self.update()
         except:
-            page.update()
+            pass
         
         # Bucle del cronómetro
         for i in range(segundos, -1, -1):
@@ -88,7 +84,7 @@ class TimerOverlay(ft.UserControl):
                 return
             
             self.txt_timer.value = str(i)
-            # Protección contra división por cero (aunque ya validamos arriba)
+            # Protección contra división por cero
             self.pb_timer.value = i / segundos if segundos > 0 else 0
             
             try:

@@ -1,30 +1,32 @@
 import flet as ft
 
-class CardioPanel(ft.UserControl):
+class CardioPanel(ft.Container):
     def __init__(self):
         super().__init__()
         self.lbl_msg = ft.Text("", size=11, color="white70", italic=True)
-        self.main_container = ft.Container(
-            content=ft.Column([
-                ft.Text("SUGERENCIA DE CARDIO", size=12, weight="bold", color="#2196F3"),
-                self.lbl_msg
-            ], spacing=2),
-            padding=10, bgcolor="#1A237E", border_radius=8, visible=False
-        )
-
-    def build(self):
-        return self.main_container
+        
+        # Configuración del Container
+        self.content = ft.Column([
+            ft.Text("SUGERENCIA DE CARDIO", size=12, weight="bold", color="#2196F3"),
+            self.lbl_msg
+        ], spacing=2)
+        
+        self.padding = 10
+        self.bgcolor = "#1A237E"
+        self.border_radius = 8
+        self.visible = False
 
     def actualizar_cardio(self, objetivo):
-        msg = ""
-        if objetivo == "Aumento de masa muscular":
-            msg = "10-15 min baja intensidad (Caminata) - AL FINAL. Para salud cardíaca sin quemar músculo."
-        elif objetivo == "Definición / Quema de Grasa":
-            msg = "25-35 min intensidad moderada (LISS) - AL FINAL. Maximiza oxidación de grasas."
+        if objetivo == "Definición / Quema de Grasa":
+            self.lbl_msg.value = "Hoy: 30 min caminata inclinada o elíptica (Zona 2)"
+            self.visible = True
+        elif objetivo == "Aumento de masa muscular":
+            self.lbl_msg.value = "Hoy: 10 min caminata ligera (calentamiento/salud)"
+            self.visible = True
         else:
-            msg = "20 min HIIT o intervalos - AL FINAL. Mejora resistencia."
+            self.visible = False
         
-        self.lbl_msg.value = msg
-        self.main_container.visible = True
-        if self.page:
+        try:
             self.update()
+        except:
+            pass

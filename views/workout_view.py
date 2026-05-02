@@ -46,7 +46,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         page.client_storage.set("workout_progress", progreso_local)
 
     # --- ELEMENTOS DE UI DINÁMICOS ---
-    lista_ejercicios = ft.Column(spacing=15)
+    lista_ejercicios = ft.Column(spacing=15, horizontal_alignment="center")
 
     # --- LÓGICA DE PERSISTENCIA ---
     def guardar_progreso_serie(ex_id, serie_idx, valor, t_descanso):
@@ -189,8 +189,5 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 scroll="adaptive"
             )
         ], expand=True),
-        
-        # Overlay del Cronómetro
         timer_overlay
-    ])
-
+    ], expand=True)
