@@ -26,7 +26,8 @@ class CardioPanel(ft.Container):
         else:
             self.visible = False
         
-        try:
-            self.update()
-        except:
-            pass
+        if self.page:
+            try:
+                self.update()
+            except:
+                pass

@@ -18,7 +18,8 @@ class StatusHeader(ft.Column):
 
     def update_rutina(self, mes, dia):
         self.lbl_rutina_actual.value = f"RUTINA: MES {mes} - DÍA {dia}"
-        try:
-            self.update()
-        except:
-            pass
+        if self.page:
+            try:
+                self.update()
+            except:
+                pass

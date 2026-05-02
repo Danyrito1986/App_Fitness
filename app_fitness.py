@@ -140,12 +140,17 @@ def main(page: ft.Page):
                 print(f"INFO: Sesión recuperada para {session_user.nombre}")
                 user_actual = session_user
                 nav_bar.visible = True
-                update_view(0)
+                # Primero añadimos el contenedor a la página
                 page.add(container_principal)
+                # Luego actualizamos su contenido
+                update_view(0)
             else:
                 print("INFO: No hay sesión activa, mostrando Login.")
-                container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
+                # Primero añadimos el contenedor
                 page.add(container_principal)
+                # Luego cargamos el login
+                container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
+                page.update()
             
             page.update()
         except Exception as e:

@@ -31,7 +31,8 @@ class MetricSummary(ft.Container):
         self.lbl_cal_final.value = f"META: {res['cal']} kcal"
         self.lbl_bf.value = f"Grasa: {res['bf']}%"
         self.lbl_masa_magra.value = f"Músculo: {res['masa_magra']} kg"
-        try:
-            self.update()
-        except:
-            pass
+        if self.page:
+            try:
+                self.update()
+            except:
+                pass

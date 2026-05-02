@@ -45,10 +45,11 @@ class TimerOverlay(ft.Container):
         self.current_timer_id = None 
         self.opacity = 0
         self.visible = False
-        try:
-            self.update()
-        except:
-            pass
+        if self.page:
+            try:
+                self.update()
+            except:
+                pass
 
     def iniciar_descanso(self, segundos, page: ft.Page):
         """Inicia un nuevo ciclo de descanso, cancelando cualquier hilo anterior."""
@@ -71,10 +72,11 @@ class TimerOverlay(ft.Container):
         self.txt_timer.value = str(segundos)
         self.pb_timer.value = 1.0
         
-        try:
-            self.update()
-        except:
-            pass
+        if self.page:
+            try:
+                self.update()
+            except:
+                pass
         
         # Bucle del cronómetro
         for i in range(segundos, -1, -1):
@@ -86,19 +88,21 @@ class TimerOverlay(ft.Container):
             # Protección contra división por cero
             self.pb_timer.value = i / segundos if segundos > 0 else 0
             
-            try:
-                self.update()
-            except:
-                break
+            if self.page:
+                try:
+                    self.update()
+                except:
+                    break
                 
             time.sleep(1)
         
         # Finalización exitosa
         if self.current_timer_id == my_id:
             self.txt_timer.value = "¡LISTO!"
-            try:
-                self.update()
-            except: pass
+            if self.page:
+                try:
+                    self.update()
+                except: pass
             
             time.sleep(1.2)
             
