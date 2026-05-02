@@ -11,10 +11,9 @@ class TimerOverlay(ft.Container):
         self.pb_timer = ft.ProgressBar(value=1.0, width=150, color="black", bgcolor="white30")
         
         # Botón de cierre para permitir al usuario cancelar el descanso
-        self.btn_close = ft.IconButton(
+        self.btn_close = ft.Button(
             icon="close",
             icon_color="black",
-            icon_size=20,
             on_click=self.cerrar_timer
         )
 
