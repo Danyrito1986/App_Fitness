@@ -9,9 +9,14 @@ from services.calculator import calculate_macros
 def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de nutrición profesional con variedad 21/7 y carga dinámica de datos."""
     
-    # --- CARGA DINÁMICA DE DATOS (Lazy Loading para evitar errores en Render) ---
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    JSON_PATH = os.path.join(BASE_DIR, "assets", "data", "diet_plan.json")
+    # --- CARGA DINÁMICA DE DATOS (Resolución de ruta robusta para Render/Linux) ---
+    # Intentamos buscar en assets relativo a la raíz del proyecto
+    JSON_PATH = os.path.join("assets", "data", "diet_plan.json")
+    
+    if not os.path.exists(JSON_PATH):
+        # Fallback para ejecución desde subdirectorios
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        JSON_PATH = os.path.join(BASE_DIR, "assets", "data", "diet_plan.json")
     
     try:
         with open(JSON_PATH, "r", encoding="utf-8") as f:
