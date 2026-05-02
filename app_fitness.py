@@ -159,7 +159,7 @@ def main(page: ft.Page):
                         ft.Icon("signal_wifi_off", size=60, color="red700"),
                         ft.Text("Error de conexión", size=20, weight="bold"),
                         ft.Text("No pudimos conectar con el servidor.\nRevisa tu internet.", text_align="center", color="white54"),
-                        ft.ElevatedButton(content=ft.Text("Reintentar ahora"), icon="refresh", on_click=inicializar_conexion)
+                        ft.Button(content=ft.Text("Reintentar ahora"), icon="refresh", on_click=inicializar_conexion)
                     ], horizontal_alignment="center", alignment="center"),
                     expand=True, alignment=ft.Alignment(0, 0)
                 )
@@ -171,13 +171,10 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     try:
-        # Render usa el puerto 10000 por defecto
-        port = int(os.environ.get("PORT", 10000))
+        # DEJAMOS QUE RENDER ASIGNE EL PUERTO DINÁMICAMENTE
+        port = int(os.environ.get("PORT", 8080))
         
-        os.environ["FLET_SERVER_IP"] = "0.0.0.0"
-        os.environ["FLET_SERVER_PORT"] = str(port)
-        
-        print(f"--- SERVIDOR FLET 1.0 (BETA) INICIANDO EN 0.0.0.0:{port} ---")
+        print(f"--- SERVIDOR FLET 1.0 INICIANDO (PUERTO DINÁMICO: {port}) ---")
         
         ft.run(
             main,
