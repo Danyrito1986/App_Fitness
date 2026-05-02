@@ -169,17 +169,20 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     try:
-        port = int(os.environ.get("PORT", 8551))
+        # Render usa el puerto 10000 por defecto si no se especifica
+        port = int(os.environ.get("PORT", 10000))
         
-        # CONFIGURACIÓN PARA FLET 1.0+ (ASGI / UVICORN)
+        # CONFIGURACIÓN EXPLÍCITA PARA RENDER
         os.environ["FLET_SERVER_IP"] = "0.0.0.0"
         os.environ["FLET_SERVER_PORT"] = str(port)
         
-        print(f"--- INICIANDO SERVIDOR FLET 1.0 (UVICORN) EN 0.0.0.0:{port} ---")
+        print(f"--- SERVIDOR FLET 1.0 INICIANDO EN 0.0.0.0:{port} ---")
         
-        # En Flet 0.84.0+, ft.run() detecta automáticamente el entorno web/headless
+        # Forzamos host y port dentro de ft.run para máxima compatibilidad con Render
         ft.run(
             main,
+            host="0.0.0.0",
+            port=port,
             assets_dir="assets"
         )
     except Exception as e:
