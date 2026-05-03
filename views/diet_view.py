@@ -107,7 +107,7 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
         return ft.Card(
             content=ft.Container(
                 content=ft.Column([
-                    ft.ListTile(leading=ft.Icon(ft.icons.AUTO_AWESOME, color="#FFD700"), title=ft.Text("SUPLEMENTACIÓN", weight="bold", size=18)),
+                    ft.ListTile(leading=ft.Icon(ft.Icons.AUTO_AWESOME, color="#FFD700"), title=ft.Text("SUPLEMENTACIÓN", weight="bold", size=18)),
                     ft.Container(content=ft.Column(items, spacing=15), padding=ft.padding.only(left=20, right=20, bottom=25))
                 ]),
                 bgcolor="#1E1E1E", border_radius=15, border=ft.border.all(1, "#FFD70033")
@@ -131,9 +131,9 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
             padding=15, bgcolor="#121212", border_radius=15, border=ft.border.all(1, "white10")
         ),
 
-        card_comida_detallada("Desayuno", 0.30, ft.icons.BRUNCH_DINING),
-        card_comida_detallada("Almuerzo", 0.40, ft.icons.LUNCH_DINING),
-        card_comida_detallada("Cena", 0.30, ft.icons.DINNER_DINING),
+        card_comida_detallada("Desayuno", 0.30, ft.Icons.BRUNCH_DINING),
+        card_comida_detallada("Almuerzo", 0.40, ft.Icons.LUNCH_DINING),
+        card_comida_detallada("Cena", 0.30, ft.Icons.DINNER_DINING),
         card_suplementacion(),
         ft.Container(height=20)
     ], scroll=ft.ScrollMode.ADAPTIVE, horizontal_alignment="center", spacing=15)

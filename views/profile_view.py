@@ -153,7 +153,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         
         ft.ElevatedButton(
             "GUARDAR CAMBIOS", 
-            icon=ft.icons.SAVE, 
+            icon=ft.Icons.SAVE, 
             on_click=guardar_perfil,
             style=ft.ButtonStyle(color="black", bgcolor="#FFD700"),
             width=MAX_WIDTH, height=50

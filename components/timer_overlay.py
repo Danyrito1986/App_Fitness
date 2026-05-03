@@ -12,7 +12,7 @@ class TimerOverlay(ft.Container):
         
         # Botón de cierre para permitir al usuario cancelar el descanso
         self.btn_close = ft.IconButton(
-            icon=ft.icons.CLOSE,
+            icon=ft.Icons.CLOSE,
             icon_color="black",
             icon_size=20,
             on_click=self.cerrar_timer

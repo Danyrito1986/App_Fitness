@@ -20,8 +20,8 @@ def main(page: ft.Page):
     page.padding = 0
     
     # Revertir a propiedades clásicas de Flet 0.21.x
-    page.window_width = 420
-    page.window_height = 800
+    page.window.width = 420
+    page.window.height = 800
 
     # Pantalla de Carga Inicial
     loading_screen = ft.Container(
@@ -138,9 +138,9 @@ def main(page: ft.Page):
             page.add(
                 ft.Container(
                     content=ft.Column([
-                        ft.Icon(ft.icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
+                        ft.Icon(ft.Icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
                         ft.Text("Error de conexión", size=20, weight="bold"),
-                        ft.ElevatedButton("Reintentar ahora", icon=ft.icons.REFRESH, on_click=lambda _: inicializar_conexion())
+                        ft.ElevatedButton("Reintentar ahora", icon=ft.Icons.REFRESH, on_click=lambda _: inicializar_conexion())
                     ], horizontal_alignment="center", alignment="center"),
                     expand=True, alignment=ft.alignment.center
                 )

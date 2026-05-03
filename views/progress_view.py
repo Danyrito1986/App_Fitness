@@ -61,7 +61,7 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
     elif len(data_points) == 1:
         chart_container = ft.Container(
             content=ft.Column([
-                ft.Icon(ft.icons.SHOW_CHART, size=40, color="white24"),
+                ft.Icon(ft.Icons.SHOW_CHART, size=40, color="white24"),
                 ft.Text(f"Peso inicial: {history[0].peso}kg. ¡Sigue registrando para ver la curva!", color="white54", text_align="center")
             ], horizontal_alignment="center"),
             padding=30, bgcolor="#1E1E1E", border_radius=15, alignment=ft.alignment.center
@@ -74,7 +74,7 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
             list_items.append(
                 ft.Container(
                     content=ft.Row([
-                        ft.Icon(ft.icons.MONITOR_WEIGHT, color="#FFD700", size=20),
+                        ft.Icon(ft.Icons.MONITOR_WEIGHT, color="#FFD700", size=20),
                         ft.Text(f"{h.peso} kg", weight="bold", size=16),
                         ft.Text(f"{h.fecha.split('T')[0]}", color="white54", size=12, expand=True, text_align="right")
                     ]),
@@ -98,7 +98,7 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
         ft.Container(height=20),
         ft.Container(
             content=ft.Column([
-                ft.Row([ft.Icon(ft.icons.INFO_OUTLINE, size=16), ft.Text("Consejo PRO", weight="bold")]),
+                ft.Row([ft.Icon(ft.Icons.INFO_OUTLINE, size=16), ft.Text("Consejo PRO", weight="bold")]),
                 ft.Text("Pésate siempre en ayunas, después de ir al baño, para obtener la medida más precisa.", size=12, color="white70")
             ], spacing=5),
             padding=15, bgcolor="blue90033", border_radius=10, border=ft.border.all(1, "blue900")

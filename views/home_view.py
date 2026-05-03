@@ -73,12 +73,12 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
     widget_agua = ft.Container(
         content=ft.Column([
             ft.Row([
-                ft.Icon(ft.icons.WATER_DROP, color="#42A5F5"),
+                ft.Icon(ft.Icons.WATER_DROP, color="#42A5F5"),
                 ft.Text("Hidratación", weight="bold"),
             ], alignment=ft.MainAxisAlignment.CENTER),
             lbl_restante,
             lbl_detalle_agua,
-            ft.IconButton(ft.icons.ADD_CIRCLE, icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
+            ft.IconButton(ft.Icons.ADD_CIRCLE, icon_color="#42A5F5", icon_size=40, on_click=sumar_agua),
         ], horizontal_alignment="center", spacing=5),
         padding=15, bgcolor="#1E1E1E", border_radius=20, width=220
     )
@@ -91,7 +91,7 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
         ft.Container(height=10),
         ft.TextButton(
             "CERRAR SESIÓN", 
-            icon=ft.icons.LOGOUT, 
+            icon=ft.Icons.LOGOUT, 
             on_click=lambda _: logout_handler(),
             style=ft.ButtonStyle(color="red400")
         ),
