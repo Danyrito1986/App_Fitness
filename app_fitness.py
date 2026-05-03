@@ -19,9 +19,16 @@ def main(page: ft.Page):
     page.bgcolor = "#121212"
     page.padding = 0
     
-    # Revertir a propiedades clásicas de Flet 0.21.x
-    page.window.width = 420
-    page.window.height = 800
+    # Configuración de dimensiones de ventana (Compatible con Flet 0.21+ y 0.25+)
+    try:
+        if hasattr(page, "window"):
+            page.window.width = 420
+            page.window.height = 800
+        else:
+            page.window_width = 420
+            page.window_height = 800
+    except Exception as e:
+        print(f"Aviso: No se pudo establecer el tamaño de ventana: {e}")
 
     # Pantalla de Carga Inicial
     loading_screen = ft.Container(
