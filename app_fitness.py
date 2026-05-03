@@ -1,11 +1,18 @@
+# Importación ultra-segura para Flet 0.21.2
 import flet as ft
-import flet.fastapi as flet_fastapi
+try:
+    from flet import NavigationDestination
+except ImportError:
+    try:
+        from flet_core.navigation_bar import NavigationDestination
+    except ImportError:
+        NavigationDestination = getattr(ft, "NavigationDestination", None)
+
 import db_manager as db
 import os
 import traceback
 import sys
 import threading
-import uvicorn
 from models import User
 from views.home_view import home_view
 from views.workout_view import workout_view
@@ -89,18 +96,25 @@ def main(page: ft.Page):
     def on_nav_change(e):
         update_view(int(e.control.selected_index))
 
-    # Revertir a ft.NavigationDestination
+    # Uso del componente recuperado de forma segura
+    destinations = []
+    if NavigationDestination:
+        destinations = [
+            NavigationDestination(icon="home", label="Inicio"),
+            NavigationDestination(icon="person", label="Perfil"),
+            NavigationDestination(icon="fitness_center", label="Entreno"),
+            NavigationDestination(icon="restaurant", label="Dieta"),
+            NavigationDestination(icon="show_chart", label="Progreso"),
+        ]
+    else:
+        # Fallback extremo si nada funcionó
+        print("CRITICAL: NavigationDestination no encontrado.")
+
     nav_bar = ft.NavigationBar(
         bgcolor="#1E1E1E",
         selected_index=0,
         on_change=on_nav_change,
-        destinations=[
-            ft.NavigationDestination(icon="home", label="Inicio"),
-            ft.NavigationDestination(icon="person", label="Perfil"),
-            ft.NavigationDestination(icon="fitness_center", label="Entreno"),
-            ft.NavigationDestination(icon="restaurant", label="Dieta"),
-            ft.NavigationDestination(icon="show_chart", label="Progreso"),
-        ],
+        destinations=destinations,
         visible=False
     )
     page.navigation_bar = nav_bar
@@ -151,22 +165,20 @@ def main(page: ft.Page):
 
     threading.Thread(target=inicializar_conexion, daemon=True).start()
 
-# --- EXPORTACIÓN PARA RENDER (FastAPI) ---
-# Esto permite que Render use uvicorn directamente si se desea
-app = flet_fastapi.app(main, assets_dir="assets")
-
 if __name__ == "__main__":
     try:
-        # Detección dinámica de puerto
+        # Arranque nativo estable para Flet 0.21.2
         port = int(os.environ.get("PORT", 8551))
         
-        if "PORT" in os.environ:
-            print(f"Iniciando Servidor Dinámico (Render) en puerto {port}...")
-            # En entorno Cloud, usamos uvicorn directamente con la app de fastapi
-            uvicorn.run(app, host="0.0.0.0", port=port)
-        else:
-            print("Iniciando Modo Local (Escritorio)...")
-            ft.app(target=main, assets_dir="assets")
+        # En Render, view=None arranca el servidor web correctamente en 0.21.2
+        # Para local, abrirá el navegador o ventana según corresponda
+        ft.app(
+            target=main,
+            view=None if "PORT" in os.environ else ft.AppView.FLET_APP,
+            port=port,
+            host="0.0.0.0",
+            assets_dir="assets"
+        )
             
     except Exception as e:
         print("\nERROR FATAL AL ARRANCAR:")
