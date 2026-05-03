@@ -1,14 +1,35 @@
-# Importación ultra-segura para Flet 0.21.2
 import flet as ft
-try:
-    from flet import NavigationDestination
-except ImportError:
+
+# --- PARCHE DE COMPATIBILIDAD GLOBAL (SURVIVOR MODE) ---
+# 1. Compatibilidad de Iconos (ft.icons vs ft.Icons)
+if not hasattr(ft, "icons"):
+    try:
+        ft.icons = getattr(ft, "Icons", None)
+    except:
+        pass
+
+# 2. Compatibilidad de Navegación
+if not hasattr(ft, "NavigationDestination"):
     try:
         from flet_core.navigation_bar import NavigationDestination
-    except ImportError:
-        NavigationDestination = getattr(ft, "NavigationDestination", None)
+        ft.NavigationDestination = NavigationDestination
+    except:
+        try:
+            from flet.core.navigation_bar import NavigationDestination
+            ft.NavigationDestination = NavigationDestination
+        except:
+            pass
+
+# 3. Compatibilidad de Modo de Scroll
+if not hasattr(ft, "ScrollMode"):
+    try:
+        from flet_core.types import ScrollMode
+        ft.ScrollMode = ScrollMode
+    except:
+        pass
 
 import db_manager as db
+# ... (rest of imports)
 import os
 import traceback
 import sys
