@@ -136,9 +136,14 @@ def main(page: ft.Page):
 
     def inicializar_conexion():
         nonlocal client, user_actual
+        status_msg = "Iniciando..."
         try:
+            status_msg = "Conectando a Supabase..."
             client = db.get_supabase_client()
+            
+            status_msg = "Buscando sesión de usuario..."
             session_user = db.get_user(client)
+            
             page.controls.clear()
             if session_user:
                 user_actual = session_user
@@ -150,12 +155,15 @@ def main(page: ft.Page):
                 container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
             page.update()
         except Exception as e:
+            error_detallado = f"Punto de fallo: {status_msg}\nError: {str(e)}"
+            print(f"DEBUG_CONNECTION_ERROR: {error_detallado}")
             page.controls.clear()
             page.add(
                 ft.Container(
                     content=ft.Column([
                         ft.Icon(ft.icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
                         ft.Text("Error de conexión", size=20, weight="bold"),
+                        ft.Text(error_detallado, color="white54", text_align="center", size=12),
                         ft.ElevatedButton("Reintentar ahora", icon=ft.icons.REFRESH, on_click=lambda _: inicializar_conexion())
                     ], horizontal_alignment="center", alignment="center"),
                     expand=True, alignment=ft.alignment.center
