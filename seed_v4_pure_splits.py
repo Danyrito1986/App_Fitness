@@ -91,7 +91,13 @@ def seed_pure_splits_v4(execute_insert=False):
                             {"nombre": "Deadbug Pro (Control Lumbar)", "series": 3, "reps": 12, "descanso": 45} # Estabilidad Profunda
                         ]
 
-                        all_days = [base_push, base_pull, base_legs_push, base_legs_pull, base_core]
+                        all_days = [
+                            base_push,       # Día 1: Empuje Superior
+                            base_legs_push, # Día 2: Empuje Inferior (Intercambiado)
+                            base_pull,      # Día 3: Jalón Superior (Intercambiado)
+                            base_legs_pull,  # Día 4: Jalón Inferior
+                            base_core        # Día 5: Core
+                        ]
                         for d_idx, day_exercises in enumerate(all_days):
                             for ex in day_exercises:
                                 final_ex = ex.copy()
