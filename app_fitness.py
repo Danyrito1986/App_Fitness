@@ -94,23 +94,20 @@ def main(page: ft.Page):
     def update_view(index):
         if not user_actual: return
         
-        if index in vistas_cache and index != 2:
-            content = vistas_cache[index]
-        else:
-            if index == 0:
-                content = home_view(page, client, user_actual, show_snackbar, logout_handler)
-            elif index == 1:
-                content = profile_view(page, client, user_actual, show_snackbar)
-            elif index == 2:
-                content = workout_view(page, client, user_actual, show_snackbar)
-            elif index == 3:
-                content = diet_view(page, client, user_actual, show_snackbar)
-            elif index == 4:
-                content = progress_view(page, client, user_actual, show_snackbar)
-            else: return
+        # Siempre refrescamos el usuario desde la nube/referencia antes de cargar ciertas vistas
+        # o simplemente invalidamos la caché si venimos del perfil
+        if index == 0:
+            content = home_view(page, client, user_actual, show_snackbar, logout_handler)
+        elif index == 1:
+            content = profile_view(page, client, user_actual, show_snackbar)
+        elif index == 2:
+            content = workout_view(page, client, user_actual, show_snackbar)
+        elif index == 3:
+            content = diet_view(page, client, user_actual, show_snackbar)
+        elif index == 4:
+            content = progress_view(page, client, user_actual, show_snackbar)
+        else: return
             
-            if index != 2: vistas_cache[index] = content
-
         container_principal.content = content
         page.update()
 
@@ -119,13 +116,15 @@ def main(page: ft.Page):
 
     # Uso del componente recuperado de forma segura
     destinations = []
-    if NavigationDestination:
+    nav_dest = getattr(ft, "NavigationDestination", None)
+    
+    if nav_dest:
         destinations = [
-            NavigationDestination(icon="home", label="Inicio"),
-            NavigationDestination(icon="person", label="Perfil"),
-            NavigationDestination(icon="fitness_center", label="Entreno"),
-            NavigationDestination(icon="restaurant", label="Dieta"),
-            NavigationDestination(icon="show_chart", label="Progreso"),
+            nav_dest(icon=ft.icons.HOME, label="Inicio"),
+            nav_dest(icon=ft.icons.PERSON, label="Perfil"),
+            nav_dest(icon=ft.icons.FITNESS_CENTER, label="Entreno"),
+            nav_dest(icon=ft.icons.RESTAURANT, label="Dieta"),
+            nav_dest(icon=ft.icons.SHOW_CHART, label="Progreso"),
         ]
     else:
         # Fallback extremo si nada funcionó

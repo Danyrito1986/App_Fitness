@@ -1,5 +1,6 @@
 import flet as ft
 import db_manager as db
+import threading
 from models import User
 from supabase import Client
 from services.calculator import calculate_macros
@@ -9,16 +10,18 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
     """Vista de perfil avanzada con cálculos de grasa y masa muscular responsiva."""
     
     # --- CONFIGURACIÓN DE ANCHO RESPONSIVO ---
+    # Eliminamos el ancho fijo estricto para mejor adaptabilidad en móviles
     MAX_WIDTH = 400
 
     # --- COMPONENTES ---
     metric_summary = MetricSummary(MAX_WIDTH)
+    debounce_timer = None
 
     # --- CAMPOS DE ENTRADA ---
     txt_nombre = ft.TextField(label="Nombre", value=user.nombre, max_length=50, border_color="#FFD700", width=MAX_WIDTH)
-    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
+    txt_edad = ft.TextField(label="Edad", value=str(user.edad), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo_debouced())
+    txt_peso = ft.TextField(label="Peso (kg)", value=str(user.peso_actual), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo_debouced())
+    txt_altura = ft.TextField(label="Altura (cm)", value=str(user.altura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo_debouced())
     
     dd_genero = ft.Dropdown(
         label="Género",
@@ -37,7 +40,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.dropdown.Option("Pro")
         ],
         border_color="#FFD700", width=MAX_WIDTH,
-        on_change=lambda _: calcular_en_vivo()
+        on_change=lambda _: calcular_en_vivo_debouced()
     )
 
     dd_objetivo = ft.Dropdown(
@@ -49,13 +52,13 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ft.dropdown.Option("Resistencia"),
         ],
         border_color="#FFD700", width=MAX_WIDTH,
-        on_change=lambda _: calcular_en_vivo()
+        on_change=lambda _: calcular_en_vivo_debouced()
     )
     
     # Medidas para Grasa Corporal
-    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo())
-    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=120, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo())
+    txt_cuello = ft.TextField(label="Cuello (cm)", value=str(user.cuello), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo_debouced())
+    txt_cintura = ft.TextField(label="Cintura (cm)", value=str(user.cintura), width=120, border_color="#FFD700", on_change=lambda _: calcular_en_vivo_debouced())
+    txt_cadera = ft.TextField(label="Cadera (cm)", value=str(user.cadera), width=120, border_color="#FFD700", visible=(user.genero == "Mujer"), on_change=lambda _: calcular_en_vivo_debouced())
 
     # Medidas Adicionales de Control
     txt_bicep = ft.TextField(label="Bíceps", value=str(user.bicep), width=90, border_color="#2196F3")
@@ -69,15 +72,32 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         except ValueError:
             return default
 
+    def calcular_en_vivo_debouced():
+        nonlocal debounce_timer
+        if debounce_timer:
+            debounce_timer.cancel()
+        debounce_timer = threading.Timer(0.5, calcular_en_vivo)
+        debounce_timer.start()
+
     def calcular_en_vivo(init=False):
         try:
+            # Validar campos numéricos con feedback visual
+            invalid = False
             campos_num = [txt_edad, txt_peso, txt_altura, txt_cuello, txt_cintura]
+            if dd_genero.value == "Mujer":
+                campos_num.append(txt_cadera)
+                
             for c in campos_num:
                 try:
                     float(c.value)
                     c.border_color = "#FFD700"
                 except:
-                    c.border_color = "red700" if c.value else "#FFD700"
+                    c.border_color = "red700"
+                    invalid = True
+
+            if invalid:
+                if not init: page.update()
+                return
 
             val_genero = dd_genero.value
             val_altura = safe_float(txt_altura.value, user.altura)
@@ -86,10 +106,11 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             val_cintura = safe_float(txt_cintura.value, user.cintura)
             val_cadera = safe_float(txt_cadera.value, user.cadera)
             val_objetivo = dd_objetivo.value
+            val_nivel = dd_nivel.value
             val_edad = int(safe_float(txt_edad.value, user.edad))
 
             temp_user = User(
-                id=user.id, nombre=user.nombre, objetivo=val_objetivo,
+                id=user.id, nombre=user.nombre, objetivo=val_objetivo, nivel=val_nivel,
                 peso_actual=val_peso, genero=val_genero, altura=val_altura,
                 cuello=val_cuello, cintura=val_cintura, cadera=val_cadera, edad=val_edad
             )
@@ -97,7 +118,7 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
             res = calculate_macros(temp_user)
             metric_summary.actualizar(res)
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error en calculo en vivo: {e}")
         
         if not init: page.update()
 
@@ -107,28 +128,36 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
     def guardar_perfil(e):
         try:
-            success = db.update_user_profile(client, user.id, {
-                'nombre': txt_nombre.value, 'objetivo': dd_objetivo.value,
-                'nivel': dd_nivel.value, 'peso': float(txt_peso.value),
-                'genero': dd_genero.value, 'altura': float(txt_altura.value),
-                'cuello': float(txt_cuello.value), 'cintura': float(txt_cintura.value),
-                'cadera': float(txt_cadera.value), 'pecho': float(txt_pecho.value),
-                'gluteo': float(txt_gluteo.value), 'bicep': float(txt_bicep.value),
-                'muslo': float(txt_muslo.value), 'edad': int(txt_edad.value)
-            })
+            # Validar antes de guardar
+            try:
+                data_to_save = {
+                    'nombre': txt_nombre.value, 'objetivo': dd_objetivo.value,
+                    'nivel': dd_nivel.value, 'peso': float(txt_peso.value),
+                    'genero': dd_genero.value, 'altura': float(txt_altura.value),
+                    'cuello': float(txt_cuello.value), 'cintura': float(txt_cintura.value),
+                    'cadera': float(txt_cadera.value), 'pecho': float(txt_pecho.value),
+                    'gluteo': float(txt_gluteo.value), 'bicep': float(txt_bicep.value),
+                    'muslo': float(txt_muslo.value), 'edad': int(txt_edad.value)
+                }
+            except:
+                show_snackbar("Por favor corrige los campos en rojo", True)
+                return
+
+            success = db.update_user_profile(client, user.id, data_to_save)
             if success:
+                # Actualizar objeto user local (referencia compartida)
                 user.nombre, user.objetivo, user.nivel = txt_nombre.value, dd_objetivo.value, dd_nivel.value
                 user.peso_actual, user.genero, user.altura = float(txt_peso.value), dd_genero.value, float(txt_altura.value)
                 user.cuello, user.cintura, user.cadera = float(txt_cuello.value), float(txt_cintura.value), float(txt_cadera.value)
                 user.pecho, user.gluteo, user.bicep, user.muslo, user.edad = float(txt_pecho.value), float(txt_gluteo.value), float(txt_bicep.value), float(txt_muslo.value), int(txt_edad.value)
                 
                 db.log_weight(client, user.id, user.peso_actual)
-                show_snackbar("¡Perfil guardado! ✨", False)
+                show_snackbar("¡Perfil guardado y sincronizado! ✨", False)
                 calcular_en_vivo()
             else:
-                show_snackbar("Error al guardar.", True)
+                show_snackbar("Error al guardar en la nube.", True)
         except Exception as ex:
-            show_snackbar(f"Error: {ex}", True)
+            show_snackbar(f"Error crítico: {ex}", True)
 
     calcular_en_vivo(init=True)
 
@@ -138,24 +167,24 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         
         ft.Column([
             txt_nombre, dd_genero, dd_nivel, dd_objetivo,
-            ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", wrap=True),
+            ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", wrap=True, spacing=10),
         ], horizontal_alignment="center", spacing=10),
         
         ft.Divider(height=20, color="white12"),
-        ft.Text("MEDIDAS DE GRASA", size=14, weight="bold"),
-        ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", wrap=True),
+        ft.Text("MEDIDAS PARA GRASA CORPORAL", size=14, weight="bold", color="white70"),
+        ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", wrap=True, spacing=10),
         
         ft.Divider(height=20, color="white12"),
-        ft.Text("CONTROL VOLUMEN", size=14, weight="bold", color="#2196F3"),
-        ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", wrap=True),
+        ft.Text("CONTROL DE VOLUMEN (CM)", size=14, weight="bold", color="#2196F3"),
+        ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", wrap=True, spacing=10),
         
         metric_summary,
         
         ft.ElevatedButton(
             "GUARDAR CAMBIOS", 
-            icon=ft.Icons.SAVE, 
+            icon=ft.icons.SAVE, 
             on_click=guardar_perfil,
-            style=ft.ButtonStyle(color="black", bgcolor="#FFD700"),
+            style=ft.ButtonStyle(color="black", bgcolor="#FFD700", shape=ft.RoundedRectangleBorder(radius=8)),
             width=MAX_WIDTH, height=50
         ),
         ft.Container(height=20)

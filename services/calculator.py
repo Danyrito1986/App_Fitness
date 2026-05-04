@@ -20,14 +20,27 @@ def calculate_macros(user: User):
             suma = max(1, cintura + cadera - cuello)
             bf = 495 / (1.29579 - 0.35004 * math.log10(suma) + 0.22100 * math.log10(altura)) - 450
     except (ValueError, ZeroDivisionError):
-        bf = 25.0 # Fallback seguro
+        # Fallback lógico según género si las medidas son inconsistentes
+        bf = 18.0 if user.genero == "Hombre" else 28.0 
+    
+    # Validar que el resultado sea numéricamente posible antes de limitar
+    if math.isnan(bf) or math.isinf(bf):
+        bf = 20.0
     
     bf = max(5, min(60, bf)) # Limitar entre 5% y 60%
     masa_magra = peso * (1 - (bf / 100))
     
     # 2. TMB (Katch-McArdle) y GET (Gasto Energético Total)
     tmb = 370 + (21.6 * masa_magra)
-    get = tmb * 1.55  # Multiplicador de actividad moderada
+    
+    # Factor de actividad dinámico basado en el nivel
+    activity_factors = {
+        "Novato": 1.35,
+        "Intermedio": 1.55,
+        "Pro": 1.75
+    }
+    factor = activity_factors.get(user.nivel, 1.55)
+    get = tmb * factor
     
     # 3. Ajuste por objetivo
     ajuste = 0

@@ -8,9 +8,9 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
     is_login_mode = True
 
     # Componentes de UI
-    email_field = ft.TextField(label="Correo Electrónico", prefix_icon=ft.Icons.EMAIL, width=300)
-    password_field = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, prefix_icon=ft.Icons.LOCK, width=300)
-    name_field = ft.TextField(label="Nombre Completo", prefix_icon=ft.Icons.PERSON, width=300, visible=False)
+    email_field = ft.TextField(label="Correo Electrónico", prefix_icon=ft.icons.EMAIL, width=300)
+    password_field = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, prefix_icon=ft.icons.LOCK, width=300)
+    name_field = ft.TextField(label="Nombre Completo", prefix_icon=ft.icons.PERSON, width=300, visible=False)
     
     error_text = ft.Text(color="red", size=12)
     
@@ -67,7 +67,7 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
     return ft.Container(
         content=ft.Column(
             [
-                ft.Icon(ft.Icons.FITNESS_CENTER, size=80, color="blue700"),
+                ft.Icon(ft.icons.FITNESS_CENTER, size=80, color="blue700"),
                 ft.Text("Bienvenido a App Fitness", size=24, weight="bold"),
                 ft.Text("Tu entrenador personal en la nube", size=14, color="grey400"),
                 ft.Divider(height=20, color="transparent"),

@@ -1,6 +1,5 @@
 import flet as ft
 import db_manager as db
-import time
 import threading
 import copy
 from models import User, Exercise
@@ -19,6 +18,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         timer_overlay = TimerOverlay()
         cardio_panel = CardioPanel()
         status_header = StatusHeader(user)
+        save_timer = None
         
         # --- ESTADO Y PERSISTENCIA ---
         mes_seleccionado = user.mes_actual
@@ -51,6 +51,21 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
         lista_ejercicios = ft.Column(spacing=15, horizontal_alignment="center")
 
+        def debounced_save():
+            nonlocal save_timer
+            if save_timer:
+                save_timer.cancel()
+            save_timer = threading.Timer(2.0, persistir_nube)
+            save_timer.start()
+
+        def persistir_nube():
+            try:
+                datos_a_guardar = copy.deepcopy(progreso_local["completados"])
+                db.save_workout_progress(client, user.id, hoy_str, datos_a_guardar)
+                print("DEBUG: Progreso sincronizado con éxito.")
+            except Exception as e:
+                print(f"DEBUG_ERR: Error persistiendo en nube: {e}")
+
         def guardar_progreso_serie(ex_id, serie_idx, valor, t_descanso):
             try:
                 key = f"{mes_seleccionado}_{dia_seleccionado}_{ex_id}"
@@ -70,12 +85,9 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 except Exception as e:
                     print(f"DEBUG_ERR: Error persistencia local: {e}")
                 
-                datos_a_guardar = copy.deepcopy(progreso_local["completados"])
-                threading.Thread(
-                    target=db.save_workout_progress, 
-                    args=(client, user.id, hoy_str, datos_a_guardar),
-                    daemon=True
-                ).start()
+                # Usar guardado debounced para evitar saturar Supabase
+                debounced_save()
+                
             except Exception as e:
                 print(f"Error en guardar_progreso_serie: {e}")
 
@@ -183,15 +195,15 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 cardio_panel,
                 lista_ejercicios,
                 ft.Container(height=20),
-                ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon=ft.Icons.CHECK_CIRCLE, on_click=finalizar_entreno,
+                ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon=ft.icons.CHECK_CIRCLE, on_click=finalizar_entreno,
                                 style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
                 ft.Container(height=40)
-            ], horizontal_alignment="center", scroll="adaptive"),
+            ], horizontal_alignment="center", scroll=ft.ScrollMode.ADAPTIVE),
             expand=True,
         )
 
         return ft.Stack([
-            ft.Column([content_area], expand=True),
+            content_area,
             timer_overlay
         ], expand=True)
 
@@ -199,10 +211,11 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         print(f"FATAL_ERROR_VIEW: {e}")
         return ft.Container(
             content=ft.Column([
-                ft.Icon(ft.Icons.ERROR_OUTLINE, color="red", size=50),
+                ft.Icon(ft.icons.ERROR_OUTLINE, color="red", size=50),
                 ft.Text("Error al cargar el módulo de entrenamiento.", color="white", size=18, weight="bold"),
                 ft.Text(f"Detalle: {str(e)}", color="white54", text_align="center"),
                 ft.ElevatedButton("Reintentar", on_click=lambda _: page.go("/workout"))
             ], alignment="center", horizontal_alignment="center"),
             expand=True, bgcolor="#121212", padding=40
         )
+
