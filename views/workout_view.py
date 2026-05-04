@@ -22,10 +22,12 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         
         # --- ESTADO Y PERSISTENCIA ---
         mes_seleccionado = user.mes_actual
-        dia_seleccionado = 1
+        semana_seleccionada = (user.entrenos_mes // 5) % 4 + 1
+        dia_seleccionado = (user.entrenos_mes % 5) + 1
         nivel_seleccionado = user.nivel
         
         hoy_str = datetime.now().strftime("%Y-%m-%d")
+        # ... (rest of storage logic remains the same)
         try:
             raw_progress = page.client_storage.get("workout_progress")
             progreso_local = raw_progress if isinstance(raw_progress, dict) else {}
@@ -62,13 +64,12 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             try:
                 datos_a_guardar = copy.deepcopy(progreso_local["completados"])
                 db.save_workout_progress(client, user.id, hoy_str, datos_a_guardar)
-                print("DEBUG: Progreso sincronizado con éxito.")
             except Exception as e:
                 print(f"DEBUG_ERR: Error persistiendo en nube: {e}")
 
         def guardar_progreso_serie(ex_id, serie_idx, valor, t_descanso):
             try:
-                key = f"{mes_seleccionado}_{dia_seleccionado}_{ex_id}"
+                key = f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_{ex_id}"
                 if key not in progreso_local["completados"]:
                     progreso_local["completados"][key] = []
                 
@@ -85,15 +86,13 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 except Exception as e:
                     print(f"DEBUG_ERR: Error persistencia local: {e}")
                 
-                # Usar guardado debounced para evitar saturar Supabase
                 debounced_save()
-                
             except Exception as e:
                 print(f"Error en guardar_progreso_serie: {e}")
 
         def obtener_progreso_serie(ex_id, serie_idx):
             try:
-                key = f"{mes_seleccionado}_{dia_seleccionado}_{ex_id}"
+                key = f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_{ex_id}"
                 completados = progreso_local.get("completados", {}).get(key, [])
                 return serie_idx in completados
             except:
@@ -101,10 +100,17 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
         def finalizar_entreno(e):
             try:
-                rutina_act = f"MES {mes_seleccionado} - DÍA {dia_seleccionado}"
+                rutina_act = f"M{mes_seleccionado}-S{semana_seleccionada}-D{dia_seleccionado}"
                 if db.log_workout(client, user.id, rutina_act):
+                    # Forzar refresco de datos del usuario
+                    new_stats = db.get_workout_stats(client, user.id)
+                    user.entrenos_mes = new_stats % 20 # Asumiendo ciclo de 20
+                    user.mes_actual = (new_stats // 20) + 1
+                    
+                    # Actualizar UI
+                    status_header.update_progreso(user.mes_actual, user.entrenos_mes)
                     db.save_workout_progress(client, user.id, hoy_str, progreso_local["completados"])
-                    show_snackbar("¡Día completado y respaldado! 💪", False)
+                    show_snackbar("¡Día completado! Progreso sincronizado 💪", False)
                 else:
                     show_snackbar("Error al guardar en la nube", True)
                 page.update()
@@ -120,16 +126,22 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             actualizar_ui_meses()
             update_workout_list()
 
+        def set_semana(n):
+            nonlocal semana_seleccionada
+            semana_seleccionada = n
+            actualizar_ui_semanas()
+            update_workout_list()
+
         def update_workout_list(dia=None, init=False):
             nonlocal dia_seleccionado
             if dia: dia_seleccionado = dia
             
             try:
-                status_header.update_rutina(mes_seleccionado, dia_seleccionado)
+                status_header.update_rutina(mes_seleccionado, semana_seleccionada, dia_seleccionado)
                 actualizar_ui_dias()
                 cardio_panel.actualizar_cardio(user.objetivo)
                 
-                exs = db.get_dynamic_exercises(client, user.genero, nivel_seleccionado, mes_seleccionado, dia_seleccionado, user.objetivo)
+                exs = db.get_dynamic_exercises(client, user.genero, nivel_seleccionado, mes_seleccionado, dia_seleccionado, user.objetivo, semana_seleccionada)
                 lista_ejercicios.controls.clear()
                 
                 if not exs:
@@ -169,6 +181,18 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 ) for i in range(1, 7)
             ]
 
+        row_semanas = ft.Row(scroll="auto", spacing=10)
+        def actualizar_ui_semanas():
+            row_semanas.controls = [
+                ft.TextButton(
+                    f"SEM {i}", 
+                    on_click=lambda e, n=i: set_semana(n),
+                    style=ft.ButtonStyle(
+                        color="#FFD700" if i == semana_seleccionada else "white54"
+                    )
+                ) for i in range(1, 5)
+            ]
+
         row_dias = ft.Row(scroll="auto", spacing=8, alignment="center")
         def actualizar_ui_dias():
             row_dias.controls = [
@@ -182,6 +206,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             ]
 
         actualizar_ui_meses()
+        actualizar_ui_semanas()
         update_workout_list(init=True)
 
         content_area = ft.Container(
@@ -190,6 +215,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 status_header,
                 ft.Divider(height=10, color="transparent"),
                 row_meses,
+                row_semanas,
                 ft.Divider(height=10, color="white12"),
                 row_dias,
                 cardio_panel,

@@ -5,15 +5,20 @@ from services.calculator import calculate_macros
 from supabase import Client
 
 def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_handler):
-    """Vista de Dashboard principal."""
+    """Vista de Dashboard principal con detección dinámica de rutina."""
     macros = calculate_macros(user)
+    
+    # Sincronizar estadísticas reales desde Supabase al entrar
     stats = db.get_workout_stats(client, user.id)
+    user.entrenos_mes = stats % 20
+    user.mes_actual = (stats // 20) + 1
+    
     agua_hoy = db.get_daily_water(client, user.id)
 
     # --- LÓGICA DE HIDRATACIÓN INTELIGENTE ---
     meta_base = user.peso_actual * 0.035
-    multiplicador_nivel = {"Novato": 1.0, "Intermedio": 1.10, "Pro": 1.20}
-    meta_ajustada = meta_base * multiplicador_nivel.get(user.nivel, 1.0)
+    multiplicador_level = {"Novato": 1.0, "Intermedio": 1.10, "Pro": 1.20}
+    meta_ajustada = meta_base * multiplicador_level.get(user.nivel, 1.0)
     
     if user.objetivo == "Definición / Quema de Grasa":
         meta_ajustada *= 1.10
@@ -44,16 +49,21 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
                 show_snackbar("¡Vaso registrado! 💧", False)
             page.update()
 
-    # --- LÓGICA DE DÍA ACTUAL ---
-    dia_actual = (user.entrenos_mes % 5) + 1
+    # --- LÓGICA DE DÍA ACTUAL DINÁMICA ---
+    # Día 1: Empuje Superior | Día 2: Jalón Superior | Día 3: Empuje Inferior | Día 4: Jalón Inferior | Día 5: Core
+    dia_logico = (user.entrenos_mes % 5) + 1
+    semana_logica = (user.entrenos_mes // 5) % 4 + 1
+    
     musculos_map = {
-        1: "Pecho, Hombro Frontal y Tríceps 💪",
-        2: "Espalda, Bíceps y Posterior 🦅",
-        3: "Cuádriceps, Glúteos y Pantorrilla 🍗",
-        4: "Hombro Lateral, Trapecio y Abdomen 🛡️",
-        5: "Isquiosurales, Glúteos y Brazos 🔥"
+        1: "Empuje Superior (Pecho/Hombro/Tríceps) ⚡",
+        2: "Jalón Superior (Espalda/Bíceps) ⚓",
+        3: "Empuje Inferior (Cuádriceps/Pantorrilla) 🦵",
+        4: "Jalón Inferior (Isquiosurales/Glúteos) 🍑",
+        5: "Core y Estabilidad (Abdomen/Lumbares) 🛡️"
     }
-    mensaje_musculos = f"Músculos de hoy: {musculos_map.get(dia_actual, '¡A darle con todo!')}"
+    
+    rutina_txt = musculos_map.get(dia_logico, "¡Día de descanso o recuperación!")
+    mensaje_musculos = f"Hoy toca: {rutina_txt}\n(Mes {user.mes_actual} - Sem {semana_logica} - Día {dia_logico})"
 
     header = ft.Container(
         content=ft.Column([

@@ -148,19 +148,28 @@ def get_routines(client: Client):
     except:
         return []
 
-def get_dynamic_exercises(client: Client, genero: str, nivel: str, mes: int, dia: int, objetivo: str) -> list[Exercise]:
-    """Obtiene los ejercicios filtrados."""
+def get_dynamic_exercises(client: Client, genero: str, nivel: str, mes: int, dia: int, objetivo: str, semana: int = 1) -> list[Exercise]:
+    """Obtiene los ejercicios filtrados por mes, semana y día."""
     try:
-        response = client.table("ejercicios")\
+        query = client.table("ejercicios")\
             .select("*")\
             .eq("genero", genero)\
             .eq("nivel", nivel)\
             .eq("mes", mes)\
             .eq("dia", dia)\
-            .eq("objetivo", objetivo)\
-            .execute()
+            .eq("objetivo", objetivo)
+        
+        # Filtrar por semana si existe la columna en la tabla
+        # Si no existe, Supabase ignorará el filtro o devolverá error que manejaremos
+        try:
+            query = query.eq("semana", semana)
+        except:
+            pass
+
+        response = query.execute()
         
         if not response.data:
+            # Fallback sin objetivo si no hay resultados específicos
             response = client.table("ejercicios")\
                 .select("*")\
                 .eq("genero", genero)\
@@ -183,7 +192,7 @@ def get_dynamic_exercises(client: Client, genero: str, nivel: str, mes: int, dia
             ) for ej in response.data
         ]
     except Exception as e:
-        print(f"DEBUG_PRO: Error: {e}")
+        print(f"DEBUG_PRO: Error en get_dynamic_exercises: {e}")
         return []
 
 def get_dietas(client: Client) -> list[Diet]:
