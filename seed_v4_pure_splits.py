@@ -36,54 +36,59 @@ def seed_pure_splits_v4(execute_insert=False):
             for obj in objetivos:
                 for mes in meses:
                     for sem in semanas:
-                        # --- DÍA 1: EMPUJE SUPERIOR (PROFESIONAL) ---
+                        # --- DÍA 1: EMPUJE SUPERIOR (PECHO/HOMBRO FRONTAL/TRÍCEPS) ---
+                        # Enfoque: Empuje Horizontal y Vertical + Aislamiento
                         base_push = [
-                            {"nombre": "Press de Banca con Barra", "series": 4, "reps": 8, "descanso": 120},
-                            {"nombre": "Press Inclinado con Mancuernas", "series": 3, "reps": 12, "descanso": 90},
-                            {"nombre": "Press Militar con Barra", "series": 4, "reps": 10, "descanso": 90},
-                            {"nombre": "Elevaciones Laterales (Hombro)", "series": 4, "reps": 15, "descanso": 45},
-                            {"nombre": "Fondos de Pecho/Tríceps", "series": 3, "reps": 12, "descanso": 90},
-                            {"nombre": "Extensión de Tríceps en Polea", "series": 3, "reps": 15, "descanso": 45}
+                            {"nombre": "Press de Banca con Barra", "series": 4, "reps": 8, "descanso": 120}, # Empuje Base
+                            {"nombre": "Press Militar con Barra", "series": 4, "reps": 10, "descanso": 90},  # Hombro Frontal
+                            {"nombre": "Aperturas con Mancuernas (Flat)", "series": 3, "reps": 15, "descanso": 60}, # Estiramiento Pecho
+                            {"nombre": "Elevaciones Laterales (Polea/Mancuerna)", "series": 4, "reps": 15, "descanso": 45}, # Hombro Lateral
+                            {"nombre": "Press Francés con Barra Z", "series": 3, "reps": 12, "descanso": 60}, # Tríceps Cabeza Larga
+                            {"nombre": "Fondos en Paralelas", "series": 3, "reps": 10, "descanso": 90}  # Empuje Compuesto Final
                         ]
                         
-                        # --- DÍA 2: JALÓN SUPERIOR (PROFESIONAL) ---
+                        # --- DÍA 2: JALÓN SUPERIOR (ESPALDA/HOMBRO POSTERIOR/BÍCEPS) ---
+                        # Enfoque: Tracción Vertical y Horizontal + Aislamiento
                         base_pull = [
-                            {"nombre": "Dominadas (o Jalón al Pecho)", "series": 4, "reps": 10, "descanso": 120},
-                            {"nombre": "Remo con Barra (Pendlay)", "series": 4, "reps": 8, "descanso": 120},
-                            {"nombre": "Remo con Mancuerna a una mano", "series": 3, "reps": 12, "descanso": 60},
-                            {"nombre": "Pájaros (Hombro Posterior)", "series": 4, "reps": 15, "descanso": 45},
-                            {"nombre": "Curl de Bíceps con Barra", "series": 3, "reps": 12, "descanso": 60},
-                            {"nombre": "Curl Martillo con Mancuernas", "series": 3, "reps": 12, "descanso": 60}
+                            {"nombre": "Dominadas Pronas", "series": 4, "reps": 10, "descanso": 120}, # Tracción Vertical
+                            {"nombre": "Remo con Barra (Pendlay)", "series": 4, "reps": 8, "descanso": 120}, # Tracción Horizontal
+                            {"nombre": "Jalón al Pecho Agarre Estrecho", "series": 3, "reps": 12, "descanso": 60}, # Latissimus Dorsi
+                            {"nombre": "Pájaros con Mancuernas", "series": 4, "reps": 15, "descanso": 45}, # Hombro Posterior
+                            {"nombre": "Curl Martillo con Mancuernas", "series": 3, "reps": 12, "descanso": 60}, # Braquial/Antebrazo
+                            {"nombre": "Curl con Barra Z (Predicador)", "series": 3, "reps": 12, "descanso": 60} # Bíceps Pico
                         ]
 
-                        # --- DÍA 3: EMPUJE INFERIOR (PROFESIONAL) ---
+                        # --- DÍA 3: EMPUJE INFERIOR (CUÁDRICEPS/PANTORRILLA) ---
+                        # Enfoque: Dominancia de Rodilla
                         base_legs_push = [
-                            {"nombre": "Sentadilla Libre con Barra", "series": 4, "reps": 8, "descanso": 150},
-                            {"nombre": "Prensa de Piernas 45°", "series": 3, "reps": 15, "descanso": 120},
-                            {"nombre": "Zancadas con Mancuernas", "series": 3, "reps": 12, "descanso": 60},
-                            {"nombre": "Extensiones de Cuádriceps", "series": 3, "reps": 15, "descanso": 45},
-                            {"nombre": "Elevación de Talones De Pie", "series": 4, "reps": 15, "descanso": 45},
-                            {"nombre": "Elevación de Talones Sentado", "series": 3, "reps": 20, "descanso": 45}
+                            {"nombre": "Sentadilla Trasera con Barra", "series": 4, "reps": 8, "descanso": 150}, # Compuesto Base
+                            {"nombre": "Prensa de Piernas (Pies Bajos)", "series": 3, "reps": 15, "descanso": 120}, # Énfasis Cuádriceps
+                            {"nombre": "Zancadas Búlgaras", "series": 3, "reps": 12, "descanso": 90}, # Unilateral
+                            {"nombre": "Extensiones de Cuádriceps (Máquina)", "series": 3, "reps": 15, "descanso": 45}, # Aislamiento
+                            {"nombre": "Elevación de Talones De Pie", "series": 4, "reps": 15, "descanso": 45}, # Gastrocnemio
+                            {"nombre": "Sissy Squat (Cuerpo/Peso)", "series": 3, "reps": 15, "descanso": 60} # Estiramiento Terminal
                         ]
 
-                        # --- DÍA 4: JALÓN INFERIOR (PROFESIONAL) ---
+                        # --- DÍA 4: JALÓN INFERIOR (FEMORALES/GLÚTEOS) ---
+                        # Enfoque: Dominancia de Cadera
                         base_legs_pull = [
-                            {"nombre": "Peso Muerto Rumano (RDL)", "series": 4, "reps": 10, "descanso": 120},
-                            {"nombre": "Hip Thrust con Barra", "series": 4, "reps": 10, "descanso": 120},
-                            {"nombre": "Curl de Pierna Acostado", "series": 3, "reps": 12, "descanso": 60},
-                            {"nombre": "Curl de Pierna Sentado", "series": 3, "reps": 15, "descanso": 60},
-                            {"nombre": "Abducción de Cadera (Máquina)", "series": 3, "reps": 20, "descanso": 45},
-                            {"nombre": "Buenos Días con Barra", "series": 3, "reps": 15, "descanso": 90}
+                            {"nombre": "Peso Muerto Rumano (RDL)", "series": 4, "reps": 10, "descanso": 120}, # Cadena Posterior
+                            {"nombre": "Hip Thrust con Barra", "series": 4, "reps": 10, "descanso": 120}, # Glúteo Mayor
+                            {"nombre": "Curl de Pierna Acostado", "series": 3, "reps": 12, "descanso": 60}, # Femorales
+                            {"nombre": "Kettlebell Swings (o Pull-through)", "series": 3, "reps": 20, "descanso": 60}, # Explosividad
+                            {"nombre": "Abducciones en Máquina (Glúteo Medio)", "series": 3, "reps": 20, "descanso": 45}, # Estabilizadores
+                            {"nombre": "Patada de Glúteo en Polea", "series": 3, "reps": 15, "descanso": 60} # Aislamiento Glúteo
                         ]
 
-                        # --- DÍA 5: CORE & COMPLEMENTOS (PROFESIONAL) ---
+                        # --- DÍA 5: CORE & ESTABILIDAD DINÁMICA ---
+                        # Enfoque: Anti-extensión, Anti-rotación e Hombros (Salud)
                         base_core = [
-                            {"nombre": "Rueda Abdominal", "series": 4, "reps": 12, "descanso": 60},
-                            {"nombre": "Elevación de Piernas Colgado", "series": 4, "reps": 15, "descanso": 60},
-                            {"nombre": "Plancha Abdominal Pro", "series": 4, "reps": 60, "descanso": 45},
-                            {"nombre": "Crunch con Cable (Polea)", "series": 3, "reps": 20, "descanso": 45},
-                            {"nombre": "Hiperextensiones Lumbares", "series": 3, "reps": 15, "descanso": 60},
-                            {"nombre": "Facepulls (Salud de Hombro)", "series": 3, "reps": 20, "descanso": 45}
+                            {"nombre": "Rueda Abdominal (Rollouts)", "series": 4, "reps": 12, "descanso": 60}, # Anti-extensión
+                            {"nombre": "Press Pallof (Polea/Banda)", "series": 3, "reps": 15, "descanso": 45}, # Anti-rotación
+                            {"nombre": "Elevación de Piernas (Colgado)", "series": 4, "reps": 15, "descanso": 60}, # Abdomen Inferior
+                            {"nombre": "Plancha Lateral con Elevación", "series": 3, "reps": 45, "descanso": 45}, # Oblicuos
+                            {"nombre": "Facepulls (Salud de Manguito)", "series": 4, "reps": 20, "descanso": 45}, # Retracción Escapular
+                            {"nombre": "Deadbug Pro (Control Lumbar)", "series": 3, "reps": 12, "descanso": 45} # Estabilidad Profunda
                         ]
 
                         all_days = [base_push, base_pull, base_legs_push, base_legs_pull, base_core]
