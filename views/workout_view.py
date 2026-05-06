@@ -57,7 +57,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             nonlocal save_timer
             if save_timer:
                 save_timer.cancel()
-            save_timer = threading.Timer(2.0, persistir_nube)
+            save_timer = threading.Timer(0.1, persistir_nube)
             save_timer.start()
 
         def persistir_nube():

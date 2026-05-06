@@ -8,13 +8,20 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
     lbl_sugerencia = ft.Text(f"Sugerencia: {sugerencia_txt}", size=11, color="#FFD700", weight="bold")
     
     row_series = ft.Row(wrap=True, spacing=5)
+    
+    def create_on_change(ex_id, idx, t):
+        def handler(e):
+            on_check(ex_id, idx, e.control.value, t)
+            e.control.update()
+        return handler
+
     for s_idx in range(ex.series):
         is_checked = is_checked_func(ex.id, s_idx)
         cb = ft.Checkbox(
             label=f"S{s_idx+1}", 
             value=is_checked,
             fill_color="#FFD700",
-            on_change=lambda e, ex_id=ex.id, idx=s_idx, t=ex.descanso: on_check(ex_id, idx, e.control.value, t)
+            on_change=create_on_change(ex.id, s_idx, ex.descanso)
         )
         row_series.controls.append(cb)
 
