@@ -7,7 +7,7 @@ import os
 from services.calculator import calculate_macros
 
 def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
-    """Vista de nutrición profesional con variedad 21/7 y carga dinámica de datos."""
+    """Vista de nutrición profesional con sistema de intercambio dinámico."""
     
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     JSON_PATH = os.path.join(BASE_DIR, "assets", "data", "diet_plan.json")
@@ -27,40 +27,114 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
     
     dia_semana = datetime.now().weekday()
     nombres_dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    
+    # Recuperar selecciones personalizadas de la sesión
+    if not page.session.get("diet_selections"):
+        page.session.set("diet_selections", {})
+    
+    main_column = ft.Column(scroll=ft.ScrollMode.ADAPTIVE, horizontal_alignment="center", spacing=15)
+
+    def open_exchange_modal(tipo_comida, macro_key, macro_target_grams, fuente_key):
+        """Abre un modal para intercambiar la fuente de un macro específico."""
+        options = fuentes[fuente_key]
+        selections = page.session.get("diet_selections")
+
+        def on_select(e, idx):
+            selections[f"{dia_semana}_{tipo_comida}_{macro_key}"] = idx
+            page.session.set("diet_selections", selections)
+            bs.open = False
+            page.update()
+            build_ui()
+
+        list_tiles = []
+        for i, opt in enumerate(options):
+            # Calcular porción equivalente
+            # Si es carbohidrato, usamos 'c', si es proteina 'p', si es grasa 'g'
+            density = opt[macro_key]
+            gr = int((macro_target_grams / density) * 100)
+            
+            desc = f"{gr}g de {opt['nombre']}"
+            if opt["nombre"] == "Tortilla de Maíz":
+                desc = f"{round(macro_target_grams/15, 1)} unidades de {opt['nombre']}"
+            elif opt["nombre"] == "Pan Integral":
+                desc = f"{round(macro_target_grams/15, 1)} rebanadas de {opt['nombre']}"
+
+            list_tiles.append(
+                ft.ListTile(
+                    leading=ft.Icon(opt.get("icon", "restaurant"), color="#FFD700"),
+                    title=ft.Text(opt["nombre"], weight="bold"),
+                    subtitle=ft.Text(desc, color="white54"),
+                    on_click=lambda e, idx=i: on_select(e, idx)
+                )
+            )
+
+        bs = ft.BottomSheet(
+            ft.Container(
+                ft.Column([
+                    ft.Row([
+                        ft.Text(f"INTERCAMBIAR {macro_key.upper()}", size=16, weight="bold"),
+                        ft.IconButton(ft.icons.CLOSE, on_click=lambda _: setattr(bs, "open", False) or page.update())
+                    ], alignment="spaceBetween"),
+                    ft.Divider(color="white10"),
+                    ft.Column(list_tiles, scroll=ft.ScrollMode.AUTO, height=400)
+                ], tight=True),
+                padding=20, bgcolor="#1E1E1E", border_radius=ft.border_radius.only(top_left=20, top_right=20)
+            ),
+            open=True
+        )
+        page.overlay.append(bs)
+        page.update()
 
     def get_alimentos_dinamicos(p_comida, c_comida, f_comida, tipo_comida):
-        try:
-            indices = matriz.get(dia_semana, {}).get(tipo_comida)
-            f_p = fuentes["proteina"][indices["p"]]
-            f_c = fuentes["carbo"][indices["c"]]
-            f_g = fuentes["grasa"][indices["g"]]
-        except:
-            return {
-                "p": {"desc": "Proteína no disponible", "icon": "info"},
-                "c": {"desc": "Carbohidrato no disponible", "icon": "info"},
-                "g": {"desc": "Grasa no disponible", "icon": "info"}
-            }
+        selections = page.session.get("diet_selections")
+        indices_base = matriz.get(dia_semana, {}).get(tipo_comida, {"p": 0, "c": 0, "g": 0})
+        
+        idx_p = selections.get(f"{dia_semana}_{tipo_comida}_p", indices_base["p"])
+        idx_c = selections.get(f"{dia_semana}_{tipo_comida}_c", indices_base["c"])
+        idx_g = selections.get(f"{dia_semana}_{tipo_comida}_g", indices_base["g"])
+
+        f_p = fuentes["proteina"][idx_p]
+        f_c = fuentes["carbo"][idx_c]
+        f_g = fuentes["grasa"][idx_g]
 
         gr_p = int((p_comida / f_p["p"]) * 100)
         gr_c = int((c_comida / f_c["c"]) * 100)
         gr_g = int((f_comida / f_g["g"]) * 100)
 
-        desc_c = f"{gr_c}g de {f_c['nombre']}"
-        if f_c["nombre"] == "Tortilla de Maíz":
-            desc_c = f"{round(c_comida/15, 1)} unidades de {f_c['nombre']}"
-        elif f_c["nombre"] == "Pan Integral":
-            desc_c = f"{round(c_comida/15, 1)} rebanadas de {f_c['nombre']}"
+        def format_desc(val, name, target, unit_val, unit_name):
+            if name == unit_name:
+                return f"{round(target/unit_val, 1)} unidades de {name}"
+            return f"{val}g de {name}"
+
+        desc_p = f"{gr_p}g de {f_p['nombre']}"
+        desc_c = format_desc(gr_c, f_c['nombre'], c_comida, 15, "Tortilla de Maíz")
+        if f_c['nombre'] == "Pan Integral":
+            desc_c = format_desc(gr_c, f_c['nombre'], c_comida, 15, "Pan Integral").replace("unidades", "rebanadas")
+        desc_g = f"{gr_g}g de {f_g['nombre']}"
 
         return {
-            "p": {"desc": f"{gr_p}g de {f_p['nombre']}", "icon": f_p.get("icon", "restaurant")},
-            "c": {"desc": desc_c, "icon": f_c.get("icon", "bakery_dining")},
-            "g": {"desc": f"{gr_g}g de {f_g['nombre']} / Semillas", "icon": f_g.get("icon", "water_drop")}
+            "p": {"desc": desc_p, "icon": f_p.get("icon", "restaurant"), "target": p_comida, "fuente": "proteina"},
+            "c": {"desc": desc_c, "icon": f_c.get("icon", "bakery_dining"), "target": c_comida, "fuente": "carbo"},
+            "g": {"desc": desc_g, "icon": f_g.get("icon", "water_drop"), "target": f_comida, "fuente": "grasa"}
         }
 
     def card_comida_detallada(nombre, pct, icono_comida):
         p_c, c_c, f_c = p*pct, c*pct, f*pct
         ali = get_alimentos_dinamicos(p_c, c_c, f_c, nombre)
         
+        def item_clickable(macro_type, info):
+            return ft.Container(
+                content=ft.Row([
+                    ft.Icon(info['icon'], size=16, color="#FFD700"),
+                    ft.Text(info['desc'], size=13, expand=True),
+                    ft.Icon(ft.icons.SWAP_HORIZ, size=14, color="white24")
+                ]),
+                padding=8,
+                border_radius=8,
+                on_click=lambda _: open_exchange_modal(nombre, macro_type, info['target'], info['fuente']),
+                on_hover=lambda e: setattr(e.control, "bgcolor", "white10" if e.data == "true" else None) or e.control.update()
+            )
+
         return ft.Card(
             content=ft.Container(
                 content=ft.Column([
@@ -71,11 +145,11 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
                     ),
                     ft.Container(
                         content=ft.Column([
-                            ft.Row([ft.Icon(ali['p']['icon'], size=16, color="white54"), ft.Text(ali['p']['desc'], size=13)]),
-                            ft.Row([ft.Icon(ali['c']['icon'], size=16, color="white54"), ft.Text(ali['c']['desc'], size=13)]),
-                            ft.Row([ft.Icon(ali['g']['icon'], size=16, color="white54"), ft.Text(ali['g']['desc'], size=13)]),
-                        ], spacing=8),
-                        padding=ft.padding.only(left=20, right=20, bottom=20)
+                            item_clickable('p', ali['p']),
+                            item_clickable('c', ali['c']),
+                            item_clickable('g', ali['g']),
+                        ], spacing=4),
+                        padding=ft.padding.only(left=15, right=15, bottom=15)
                     )
                 ]),
                 bgcolor="#1E1E1E", border_radius=15
@@ -114,26 +188,35 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
             )
         )
 
-    return ft.Column([
-        ft.Row([
-            ft.Text("TU PLAN NUTRICIONAL", size=24, weight="bold", color="#FFD700"),
-            ft.Container(content=ft.Text(nombres_dias[dia_semana].upper(), weight="bold", color="black"), padding=5, bgcolor="#FFD700", border_radius=5)
-        ], alignment="spaceBetween"),
-        
-        ft.Container(
-            content=ft.Row([
-                ft.Column([ft.Text("Calorías", size=10, color="white54"), ft.Text(f"{cal}", weight="bold", size=18)]),
-                ft.VerticalDivider(),
-                ft.Column([ft.Text("Proteína", size=10, color="white54"), ft.Text(f"{p}g", weight="bold", color="#4CAF50")]),
-                ft.Column([ft.Text("Carbs", size=10, color="white54"), ft.Text(f"{c}g", weight="bold", color="#2196F3")]),
-                ft.Column([ft.Text("Grasa", size=10, color="white54"), ft.Text(f"{f}g", weight="bold", color="#FFD700")]),
-            ], alignment="space-around"),
-            padding=15, bgcolor="#121212", border_radius=15, border=ft.border.all(1, "white10")
-        ),
+    def build_ui():
+        main_column.controls.clear()
+        main_column.controls.extend([
+            ft.Row([
+                ft.Text("TU PLAN NUTRICIONAL", size=24, weight="bold", color="#FFD700"),
+                ft.Container(content=ft.Text(nombres_dias[dia_semana].upper(), weight="bold", color="black"), padding=5, bgcolor="#FFD700", border_radius=5)
+            ], alignment="spaceBetween"),
+            
+            ft.Container(
+                content=ft.Row([
+                    ft.Column([ft.Text("Calorías", size=10, color="white54"), ft.Text(f"{cal}", weight="bold", size=18)]),
+                    ft.VerticalDivider(),
+                    ft.Column([ft.Text("Proteína", size=10, color="white54"), ft.Text(f"{p}g", weight="bold", color="#4CAF50")]),
+                    ft.Column([ft.Text("Carbs", size=10, color="white54"), ft.Text(f"{c}g", weight="bold", color="#2196F3")]),
+                    ft.Column([ft.Text("Grasa", size=10, color="white54"), ft.Text(f"{f}g", weight="bold", color="#FFD700")]),
+                ], alignment="space-around"),
+                padding=15, bgcolor="#121212", border_radius=15, border=ft.border.all(1, "white10")
+            ),
 
-        card_comida_detallada("Desayuno", 0.30, ft.icons.BRUNCH_DINING),
-        card_comida_detallada("Almuerzo", 0.40, ft.icons.LUNCH_DINING),
-        card_comida_detallada("Cena", 0.30, ft.icons.DINNER_DINING),
-        card_suplementacion(),
-        ft.Container(height=20)
-    ], scroll=ft.ScrollMode.ADAPTIVE, horizontal_alignment="center", spacing=15)
+            card_comida_detallada("Desayuno", 0.30, ft.icons.BRUNCH_DINING),
+            card_comida_detallada("Almuerzo", 0.40, ft.icons.LUNCH_DINING),
+            card_comida_detallada("Cena", 0.30, ft.icons.DINNER_DINING),
+            card_suplementacion(),
+            ft.Container(height=20)
+        ])
+        try:
+            main_column.update()
+        except:
+            pass
+
+    build_ui()
+    return main_column

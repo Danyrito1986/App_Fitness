@@ -165,27 +165,77 @@ def profile_view(page: ft.Page, client: Client, user: User, show_snackbar):
         ft.Container(height=10),
         ft.Text("MI PERFIL FITNESS", size=24, weight="bold", color="#FFD700"),
         
-        ft.Column([
-            txt_nombre, dd_genero, dd_nivel, dd_objetivo,
-            ft.Row([txt_edad, txt_peso, txt_altura], alignment="center", wrap=True, spacing=10),
-        ], horizontal_alignment="center", spacing=10),
+        # --- SECCIÓN 1: DATOS PERSONALES ---
+        ft.Card(
+            content=ft.Container(
+                content=ft.Column([
+                    ft.ListTile(
+                        leading=ft.Icon(ft.icons.PERSON_OUTLINE, color="#FFD700"),
+                        title=ft.Text("DATOS PERSONALES", weight="bold"),
+                        subtitle=ft.Text("Identidad y experiencia", size=12, color="white54")
+                    ),
+                    ft.Container(
+                        content=ft.Column([
+                            txt_nombre,
+                            ft.Row([txt_edad, dd_genero], spacing=10, expand=True),
+                            dd_nivel,
+                            dd_objetivo,
+                        ], spacing=10),
+                        padding=ft.padding.only(left=15, right=15, bottom=20)
+                    )
+                ]),
+                bgcolor="#1E1E1E", border_radius=12
+            ),
+            width=MAX_WIDTH
+        ),
+
+        # --- SECCIÓN 2: COMPOSICIÓN CORPORAL ---
+        ft.Card(
+            content=ft.Container(
+                content=ft.Column([
+                    ft.ListTile(
+                        leading=ft.Icon(ft.icons.FITNESS_CENTER, color="#FFD700"),
+                        title=ft.Text("COMPOSICIÓN CORPORAL", weight="bold"),
+                        subtitle=ft.Text("Base para cálculo de macros", size=12, color="white54")
+                    ),
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Row([txt_peso, txt_altura], spacing=10, alignment="center"),
+                            ft.Row([txt_cuello, txt_cintura, txt_cadera], spacing=10, alignment="center", wrap=True),
+                        ], spacing=10),
+                        padding=ft.padding.only(left=15, right=15, bottom=20)
+                    )
+                ]),
+                bgcolor="#1E1E1E", border_radius=12
+            ),
+            width=MAX_WIDTH
+        ),
+
+        # --- SECCIÓN 3: SEGUIMIENTO MUSCULAR (COLAPSABLE) ---
+        ft.ExpansionTile(
+            title=ft.Text("CONTROL DE VOLUMEN (CM)", weight="bold", size=14, color="#2196F3"),
+            leading=ft.Icon(ft.icons.SQUARE_FOOT, color="#2196F3"),
+            bgcolor="transparent",
+            collapsed_bgcolor="transparent",
+            controls=[
+                ft.Container(
+                    content=ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", wrap=True, spacing=10),
+                    padding=20, bgcolor="#1A1A1A", border_radius=12
+                )
+            ]
+        ),
         
-        ft.Divider(height=20, color="white12"),
-        ft.Text("MEDIDAS PARA GRASA CORPORAL", size=14, weight="bold", color="white70"),
-        ft.Row([txt_cuello, txt_cintura, txt_cadera], alignment="center", wrap=True, spacing=10),
-        
-        ft.Divider(height=20, color="white12"),
-        ft.Text("CONTROL DE VOLUMEN (CM)", size=14, weight="bold", color="#2196F3"),
-        ft.Row([txt_bicep, txt_pecho, txt_gluteo, txt_muslo], alignment="center", wrap=True, spacing=10),
-        
+        # --- RESUMEN DE MÉTRICAS (AUTOMÁTICO) ---
         metric_summary,
+        
+        ft.Container(height=10),
         
         ft.ElevatedButton(
             "GUARDAR CAMBIOS", 
             icon=ft.icons.SAVE, 
             on_click=guardar_perfil,
             style=ft.ButtonStyle(color="black", bgcolor="#FFD700", shape=ft.RoundedRectangleBorder(radius=8)),
-            width=MAX_WIDTH, height=50
+            width=MAX_WIDTH, height=55
         ),
-        ft.Container(height=20)
+        ft.Container(height=30)
     ], expand=True, horizontal_alignment="center", scroll="adaptive")
