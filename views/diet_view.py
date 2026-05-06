@@ -86,37 +86,49 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
         page.update()
 
     def get_alimentos_dinamicos(p_comida, c_comida, f_comida, tipo_comida):
-        selections = page.session.get("diet_selections")
-        indices_base = matriz.get(dia_semana, {}).get(tipo_comida, {"p": 0, "c": 0, "g": 0})
-        
-        idx_p = selections.get(f"{dia_semana}_{tipo_comida}_p", indices_base["p"])
-        idx_c = selections.get(f"{dia_semana}_{tipo_comida}_c", indices_base["c"])
-        idx_g = selections.get(f"{dia_semana}_{tipo_comida}_g", indices_base["g"])
+        try:
+            selections = page.session.get("diet_selections")
+            indices_base = matriz.get(dia_semana, {}).get(tipo_comida, {"p": 0, "c": 0, "g": 0})
+            
+            idx_p = selections.get(f"{dia_semana}_{tipo_comida}_p", indices_base.get("p", 0))
+            idx_c = selections.get(f"{dia_semana}_{tipo_comida}_c", indices_base.get("c", 0))
+            idx_g = selections.get(f"{dia_semana}_{tipo_comida}_g", indices_base.get("g", 0))
 
-        f_p = fuentes["proteina"][idx_p]
-        f_c = fuentes["carbo"][idx_c]
-        f_g = fuentes["grasa"][idx_g]
+            f_p = fuentes["proteina"][idx_p]
+            f_c = fuentes["carbo"][idx_c]
+            f_g = fuentes["grasa"][idx_g]
 
-        gr_p = int((p_comida / f_p["p"]) * 100)
-        gr_c = int((c_comida / f_c["c"]) * 100)
-        gr_g = int((f_comida / f_g["g"]) * 100)
+            def get_density(obj, key):
+                d = obj.get(key, 0)
+                return d if d > 0 else 1 # Evitar división por cero
 
-        def format_desc(val, name, target, unit_val, unit_name):
-            if name == unit_name:
-                return f"{round(target/unit_val, 1)} unidades de {name}"
-            return f"{val}g de {name}"
+            gr_p = int((p_comida / get_density(f_p, "p")) * 100)
+            gr_c = int((c_comida / get_density(f_c, "c")) * 100)
+            gr_g = int((f_comida / get_density(f_g, "g")) * 100)
 
-        desc_p = f"{gr_p}g de {f_p['nombre']}"
-        desc_c = format_desc(gr_c, f_c['nombre'], c_comida, 15, "Tortilla de Maíz")
-        if f_c['nombre'] == "Pan Integral":
-            desc_c = format_desc(gr_c, f_c['nombre'], c_comida, 15, "Pan Integral").replace("unidades", "rebanadas")
-        desc_g = f"{gr_g}g de {f_g['nombre']}"
+            def format_desc(val, name, target, unit_val, unit_name):
+                if name == unit_name:
+                    return f"{round(target/unit_val, 1)} unidades de {name}"
+                return f"{val}g de {name}"
 
-        return {
-            "p": {"desc": desc_p, "icon": f_p.get("icon", "restaurant"), "target": p_comida, "fuente": "proteina"},
-            "c": {"desc": desc_c, "icon": f_c.get("icon", "bakery_dining"), "target": c_comida, "fuente": "carbo"},
-            "g": {"desc": desc_g, "icon": f_g.get("icon", "water_drop"), "target": f_comida, "fuente": "grasa"}
-        }
+            desc_p = f"{gr_p}g de {f_p['nombre']}"
+            desc_c = format_desc(gr_c, f_c['nombre'], c_comida, 15, "Tortilla de Maíz")
+            if f_c['nombre'] == "Pan Integral":
+                desc_c = format_desc(gr_c, f_c['nombre'], c_comida, 15, "Pan Integral").replace("unidades", "rebanadas")
+            desc_g = f"{gr_g}g de {f_g['nombre']}"
+
+            return {
+                "p": {"desc": desc_p, "icon": f_p.get("icon", "restaurant"), "target": p_comida, "fuente": "proteina"},
+                "c": {"desc": desc_c, "icon": f_c.get("icon", "bakery_dining"), "target": c_comida, "fuente": "carbo"},
+                "g": {"desc": desc_g, "icon": f_g.get("icon", "water_drop"), "target": f_comida, "fuente": "grasa"}
+            }
+        except Exception as e:
+            print(f"DEBUG_DIET_ERROR: {e}")
+            return {
+                "p": {"desc": "Error en datos", "icon": "error", "target": 0, "fuente": "proteina"},
+                "c": {"desc": "Error en datos", "icon": "error", "target": 0, "fuente": "carbo"},
+                "g": {"desc": "Error en datos", "icon": "error", "target": 0, "fuente": "grasa"}
+            }
 
     def card_comida_detallada(nombre, pct, icono_comida):
         p_c, c_c, f_c = p*pct, c*pct, f*pct
