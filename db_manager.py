@@ -3,9 +3,9 @@ from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from models import User, Exercise, Diet, WeightHistory, WorkoutLog, HydrationLog, PRLog
-from supabase_config import create_custom_client
+from services.image_service import get_exercise_image
 
-# Cargar variables de entorno de forma dinámica
+# ... (resto de imports)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -200,8 +200,8 @@ def get_dynamic_exercises(client: Client, genero: str, nivel: str, mes: int, dia
                 reps=ej["reps"], 
                 rutina_id=ej.get("rutina_id", 0),
                 descanso=ej.get("descanso", 60),
-                # Fallback dinámico: si no hay imagen en DB, generar una basada en el nombre
-                imagen_url=ej.get("imagen_url") or f"https://loremflickr.com/200/200/gym,{ej['nombre'].replace(' ', '_')}"
+                # Uso del catálogo curado Élite para imágenes profesionales
+                imagen_url=ej.get("imagen_url") or get_exercise_image(ej["nombre"])
             ) for ej in response.data
         ]
     except Exception as e:
