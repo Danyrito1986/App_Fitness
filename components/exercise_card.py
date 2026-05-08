@@ -32,19 +32,7 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
 
     return ft.Container(
         content=ft.Row([
-            # Imagen de Referencia (Lado Izquierdo)
-            ft.Container(
-                content=ft.Image(
-                    src=ex.imagen_url,
-                    width=100,
-                    height=100,
-                    fit=ft.ImageFit.COVER,
-                    border_radius=10,
-                ),
-                border_radius=10,
-                bgcolor="white10"
-            ),
-            # Información y Controles (Lado Derecho)
+            # Información y Controles (Lado Izquierdo)
             ft.Column([
                 ft.Row([
                     ft.Text(ex.nombre, weight="bold", size=14, expand=True, overflow=ft.TextOverflow.ELLIPSIS),
@@ -56,7 +44,19 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
                     txt_peso_hoy,
                     ft.IconButton(ft.icons.SAVE, icon_color="#4CAF50", on_click=internal_guardar_peso, icon_size=20)
                 ], alignment="spaceBetween")
-            ], spacing=5, expand=True)
+            ], spacing=5, expand=True),
+            # Imagen de Referencia (Lado Derecho)
+            ft.Container(
+                content=ft.Image(
+                    src=ex.imagen_url,
+                    width=100,
+                    height=100,
+                    fit=ft.ImageFit.COVER,
+                    border_radius=10,
+                ),
+                border_radius=10,
+                bgcolor="white10"
+            ),
         ], alignment="start", vertical_alignment="center", spacing=15),
         padding=12, bgcolor="#1E1E1E", border_radius=12
     )

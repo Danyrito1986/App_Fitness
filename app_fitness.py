@@ -29,7 +29,6 @@ if not hasattr(ft, "ScrollMode"):
         pass
 
 import db_manager as db
-# ... (rest of imports)
 import os
 import traceback
 import sys
