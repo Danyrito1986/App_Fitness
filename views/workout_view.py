@@ -38,18 +38,29 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         if not isinstance(progreso_local.get("completados"), dict) or progreso_local.get("fecha") != hoy_str:
             try:
                 datos_nube = db.get_workout_progress(client, user.id, hoy_str)
-                if datos_nube and isinstance(datos_nube, dict):
-                    progreso_local = {"fecha": hoy_str, "completados": datos_nube}
+                
+                # BLINDAJE: Solo sobrescribir si la respuesta es válida (no None)
+                if datos_nube is not None:
+                    if isinstance(datos_nube, dict):
+                        progreso_local = {"fecha": hoy_str, "completados": datos_nube}
+                    else:
+                        progreso_local = {"fecha": hoy_str, "completados": {}}
+                    
+                    # Persistir el nuevo estado válido en local
+                    try:
+                        page.client_storage.set("workout_progress", progreso_local)
+                    except Exception as e:
+                        print(f"DEBUG_ERR: Error escribiendo en client_storage (init): {e}")
                 else:
+                    # Si datos_nube es None, hubo un error de red. 
+                    # Mantenemos lo que hay en progreso_local (caché) para no borrar nada.
+                    print("DEBUG_ERR: Fallo de red detectado. Manteniendo caché local de seguridad.")
+                    if "fecha" not in progreso_local:
+                        progreso_local = {"fecha": hoy_str, "completados": {}}
+            except Exception as e:
+                print(f"DEBUG_ERR: Error crítico recuperando de nube: {e}")
+                if "fecha" not in progreso_local:
                     progreso_local = {"fecha": hoy_str, "completados": {}}
-            except Exception as e:
-                print(f"DEBUG_ERR: Error recuperando de nube: {e}")
-                progreso_local = {"fecha": hoy_str, "completados": {}}
-            
-            try:
-                page.client_storage.set("workout_progress", progreso_local)
-            except Exception as e:
-                print(f"DEBUG_ERR: Error escribiendo en client_storage (init): {e}")
 
         lista_ejercicios = ft.Column(spacing=15, horizontal_alignment="center")
 

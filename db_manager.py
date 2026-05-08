@@ -60,6 +60,17 @@ def get_user(client: Client) -> User:
         
         if response.data and len(response.data) > 0:
             u_data = response.data[0]
+            
+            # --- CALCULO DINAMICO DE PROGRESO (BLINDAJE) ---
+            # En lugar de confiar solo en la tabla 'usuarios', calculamos el progreso real
+            # desde el historial de entrenamientos registrados (historial_entrenos)
+            total_entrenos = get_workout_stats(client, u_data["id"])
+            
+            # Asumiendo ciclos de 20 entrenamientos por mes (5 días x 4 semanas)
+            # Esto garantiza que el progreso sea permanente e imposible de borrar accidentalmente
+            mes_dinamico = (total_entrenos // 20) + 1
+            entrenos_mes_dinamico = total_entrenos % 20
+
             return User(
                 id=u_data["id"], 
                 nombre=u_data.get("nombre") or "Usuario", 
@@ -76,8 +87,8 @@ def get_user(client: Client) -> User:
                 bicep=float(u_data.get("bicep") or 35.0),
                 muslo=float(u_data.get("muslo") or 55.0),
                 edad=int(u_data.get("edad") or 25),
-                mes_actual=int(u_data.get("mes_actual") or 1),
-                entrenos_mes=int(u_data.get("entrenos_mes") or 0)
+                mes_actual=mes_dinamico,
+                entrenos_mes=entrenos_mes_dinamico
             )
         
         # 2. Si no existe, crearlo vinculado permanentemente al email de Auth
@@ -188,7 +199,9 @@ def get_dynamic_exercises(client: Client, genero: str, nivel: str, mes: int, dia
                 series=ej["series"], 
                 reps=ej["reps"], 
                 rutina_id=ej.get("rutina_id", 0),
-                descanso=ej.get("descanso", 60)
+                descanso=ej.get("descanso", 60),
+                # Fallback dinámico: si no hay imagen en DB, generar una basada en el nombre
+                imagen_url=ej.get("imagen_url") or f"https://loremflickr.com/200/200/gym,{ej['nombre'].replace(' ', '_')}"
             ) for ej in response.data
         ]
     except Exception as e:
@@ -204,11 +217,24 @@ def get_dietas(client: Client) -> list[Diet]:
         return []
 
 def log_workout(client: Client, user_id: int, routine_name: str) -> bool:
-    """Registra la finalizacion de un entrenamiento."""
+    """Registra la finalizacion de un entrenamiento y actualiza el contador global."""
     try:
+        # 1. Registrar en el historial
         client.table("historial_entrenos").insert({"usuario_id": user_id, "rutina_nombre": routine_name}).execute()
+        
+        # 2. Sincronizar el contador en la tabla 'usuarios' para redundancia
+        total = get_workout_stats(client, user_id)
+        mes = (total // 20) + 1
+        entrenos = total % 20
+        
+        client.table("usuarios").update({
+            "mes_actual": mes,
+            "entrenos_mes": entrenos
+        }).eq("id", user_id).execute()
+        
         return True
-    except: 
+    except Exception as e:
+        print(f"Error en log_workout: {e}")
         return False
 
 def log_weight(client: Client, user_id: int, weight: float) -> bool:
@@ -303,12 +329,13 @@ def save_workout_progress(client: Client, user_id: int, fecha: str, datos: dict)
         return False
 
 def get_workout_progress(client: Client, user_id: int, fecha: str) -> dict:
-    """Recupera el estado de las series completadas de la base de datos."""
+    """Recupera el estado de las series completadas de la base de datos.
+    Devuelve None si hay un error de conexión, o un dict (puede estar vacío) si la consulta es exitosa."""
     try:
         response = client.table("progreso_series").select("datos").eq("usuario_id", user_id).eq("fecha", fecha).execute()
         if response.data:
             return response.data[0]["datos"]
         return {}
     except Exception as e:
-        print(f"Error get_workout_progress: {e}")
-        return {}
+        print(f"Error get_workout_progress (Posible desconexión): {e}")
+        return None

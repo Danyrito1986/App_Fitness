@@ -30,6 +30,7 @@ class Exercise:
     reps: int
     rutina_id: int
     descanso: int = 60 # Tiempo de descanso en segundos
+    imagen_url: Optional[str] = None
 
 @dataclass
 class Diet:
