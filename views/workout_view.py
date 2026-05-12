@@ -68,13 +68,17 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             nonlocal save_timer
             if save_timer:
                 save_timer.cancel()
-            save_timer = threading.Timer(0.1, persistir_nube)
+            save_timer = threading.Timer(1.0, persistir_nube)
             save_timer.start()
 
         def persistir_nube():
             try:
+                print(f"DEBUG_PRO: Sincronizando progreso con nube...")
                 datos_a_guardar = copy.deepcopy(progreso_local["completados"])
-                db.save_workout_progress(client, user.id, hoy_str, datos_a_guardar)
+                if db.save_workout_progress(client, user.id, hoy_str, datos_a_guardar):
+                    print("DEBUG_PRO: Sincronización exitosa ✅")
+                else:
+                    print("DEBUG_PRO: Error en la sincronización de nube ❌")
             except Exception as e:
                 print(f"DEBUG_ERR: Error persistiendo en nube: {e}")
 

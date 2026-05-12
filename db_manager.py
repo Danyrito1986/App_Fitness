@@ -190,7 +190,13 @@ def get_last_weight(client: Client, user_id: int, exercise_name: str) -> float:
 
 def save_workout_progress(client: Client, user_id: int, fecha: str, datos: dict) -> bool:
     try:
-        client.table("progreso_series").upsert({"usuario_id": user_id, "fecha": fecha, "datos": datos}, on_conflict="usuario_id,fecha").execute()
+        # Primero intentamos actualizar si ya existe
+        res = client.table("progreso_series").update({"datos": datos}).eq("usuario_id", user_id).eq("fecha", fecha).execute()
+        
+        # Si no hubo filas afectadas (data está vacío o nulo), insertamos
+        if not res.data:
+            client.table("progreso_series").insert({"usuario_id": user_id, "fecha": fecha, "datos": datos}).execute()
+            
         return True
     except Exception as e:
         print(f"Error save_workout_progress: {e}")
