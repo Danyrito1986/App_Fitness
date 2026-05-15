@@ -84,6 +84,12 @@ def main(page: ft.Page):
         nonlocal user_actual
         if client:
             db.logout_user(client)
+        
+        # Limpiar persistencia al cerrar sesión manualmente
+        try:
+            page.client_storage.remove("user_session")
+        except: pass
+            
         user_actual = None
         vistas_cache.clear()
         nav_bar.visible = False
@@ -161,6 +167,24 @@ def main(page: ft.Page):
             client = db.get_supabase_client()
             
             status_msg = "Buscando sesión de usuario..."
+            
+            # --- LÓGICA DE PERSISTENCIA DE 30 DÍAS ---
+            try:
+                import time
+                saved_session = page.client_storage.get("user_session")
+                if saved_session:
+                    login_time = saved_session.get("login_timestamp", 0)
+                    now = time.time()
+                    # 30 días en segundos = 30 * 24 * 60 * 60 = 2,592,000
+                    if (now - login_time) < 2592000:
+                        db.set_session(client, saved_session["access_token"], saved_session["refresh_token"])
+                        print("DEBUG_AUTH: Sesión recuperada desde storage.")
+                    else:
+                        print("DEBUG_AUTH: Sesión expirada (30 días).")
+                        page.client_storage.remove("user_session")
+            except Exception as e:
+                print(f"DEBUG_AUTH_ERROR: Fallo al recuperar sesión: {e}")
+
             session_user = db.get_user(client)
             
             page.controls.clear()

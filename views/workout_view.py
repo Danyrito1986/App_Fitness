@@ -27,6 +27,37 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         nivel_seleccionado = user.nivel
         
         hoy_str = datetime.now().strftime("%Y-%m-%d")
+        
+        # --- BARRA DE PROGRESO DE ENTRENAMIENTO ---
+        progress_bar = ft.ProgressBar(value=0, color="#FFD700", bgcolor="white10", height=4, border_radius=2)
+        lbl_percent = ft.Text("0%", size=12, color="white54", weight="bold")
+        
+        def update_overall_progress():
+            try:
+                total_exs = len(lista_ejercicios.controls)
+                if total_exs == 0: return
+                
+                completados = 0
+                for card in lista_ejercicios.controls:
+                    if isinstance(card, ft.Container):
+                        # Verificar si al menos una serie está marcada en la tarjeta
+                        key = f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_"
+                        # Esta es una simplificación, en un caso real contaríamos series reales
+                        # Por ahora, si hay datos en progreso_local para este ejercicio
+                        pass
+                
+                # Cálculo más preciso basado en progreso_local
+                keys_hoy = [k for k in progreso_local.get("completados", {}).keys() 
+                           if k.startswith(f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_")]
+                
+                # Si hay ejercicios cargados, calculamos el % de ejercicios que tienen al menos 1 serie
+                unique_ex_ids = set([k.split("_")[-1] for k in keys_hoy])
+                percent = len(unique_ex_ids) / total_exs if total_exs > 0 else 0
+                progress_bar.value = min(percent, 1.0)
+                lbl_percent.value = f"{int(percent * 100)}%"
+                page.update()
+            except: pass
+
         # ... (rest of storage logic remains the same)
         try:
             raw_progress = page.client_storage.get("workout_progress")
@@ -113,19 +144,56 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             except:
                 return False
 
+        # --- OVERLAY DE RESUMEN FINAL ---
+        summary_overlay = ft.Container(
+            content=ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.icons.EMOJI_EVENTS, color="#FFD700", size=80),
+                    ft.Text("¡ENTRENAMIENTO COMPLETADO!", size=22, weight="bold", color="white", text_align="center"),
+                    ft.Divider(color="white10"),
+                    ft.Row([
+                        ft.Column([ft.Text("EJERCICIOS", size=10, color="white54"), ft.Text("0", id="sum_ex", size=20, weight="bold")], horizontal_alignment="center"),
+                        ft.Column([ft.Text("SERIES", size=10, color="white54"), ft.Text("0", id="sum_ser", size=20, weight="bold")], horizontal_alignment="center"),
+                        ft.Column([ft.Text("CALORÍAS", size=10, color="white54"), ft.Text("~350", size=20, weight="bold")], horizontal_alignment="center"),
+                    ], alignment="spaceAround", width=300),
+                    ft.Container(height=10),
+                    ft.ElevatedButton("COMPARTIR LOGRO", icon=ft.icons.SHARE, style=ft.ButtonStyle(bgcolor="white10")),
+                    ft.TextButton("CERRAR", on_click=lambda _: setattr(summary_overlay, "visible", False) or page.update())
+                ], horizontal_alignment="center", spacing=20),
+                bgcolor="#1E1E1E", padding=30, border_radius=30, border=ft.border.all(1, "white10"),
+                width=350, height=450, alignment=ft.alignment.center
+            ),
+            expand=True, bgcolor="#CC000000", visible=False, alignment=ft.alignment.center
+        )
+
+        def mostrar_resumen():
+            # Contar datos reales de la sesión
+            keys_hoy = [k for k in progreso_local.get("completados", {}).keys() 
+                       if k.startswith(f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_")]
+            
+            num_ex = len(set([k.split("_")[-1] for k in keys_hoy]))
+            num_series = sum([len(progreso_local["completados"][k]) for k in keys_hoy])
+            
+            # Actualizar textos del resumen (Buscando por referencia manual ya que id en Flet es interno)
+            summary_overlay.content.content.controls[3].controls[0].controls[1].value = str(num_ex)
+            summary_overlay.content.content.controls[3].controls[1].controls[1].value = str(num_series)
+            
+            summary_overlay.visible = True
+            page.update()
+
         def finalizar_entreno(e):
             try:
                 rutina_act = f"M{mes_seleccionado}-S{semana_seleccionada}-D{dia_seleccionado}"
                 if db.log_workout(client, user.id, rutina_act):
                     # Forzar refresco de datos del usuario
                     new_stats = db.get_workout_stats(client, user.id)
-                    user.entrenos_mes = new_stats % 20 # Asumiendo ciclo de 20
+                    user.entrenos_mes = new_stats % 20 
                     user.mes_actual = (new_stats // 20) + 1
                     
                     # Actualizar UI
                     status_header.update_progreso(user.mes_actual, user.entrenos_mes)
                     db.save_workout_progress(client, user.id, hoy_str, progreso_local["completados"])
-                    show_snackbar("¡Día completado! Progreso sincronizado 💪", False)
+                    mostrar_resumen()
                 else:
                     show_snackbar("Error al guardar en la nube", True)
                 page.update()
@@ -245,7 +313,8 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
         return ft.Stack([
             content_area,
-            timer_overlay
+            timer_overlay,
+            summary_overlay
         ], expand=True)
 
     except Exception as e:

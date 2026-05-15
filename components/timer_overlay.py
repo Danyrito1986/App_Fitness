@@ -10,6 +10,13 @@ class TimerOverlay(ft.Container):
         self.txt_timer = ft.Text("60", size=40, weight="bold", color="black")
         self.pb_timer = ft.ProgressBar(value=1.0, width=150, color="black", bgcolor="white30")
         
+        # Audio de notificación (Beep)
+        self.audio_end = ft.Audio(
+            src="https://lrhub.github.io/flet-samples/audio/success.mp3",
+            volume=1,
+            balance=0
+        )
+        
         # Botón de cierre para permitir al usuario cancelar el descanso
         self.btn_close = ft.IconButton(
             icon=ft.icons.CLOSE,
@@ -25,7 +32,8 @@ class TimerOverlay(ft.Container):
                     self.txt_timer,
                     self.pb_timer
                 ], horizontal_alignment="center", spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                ft.Container(content=self.btn_close, alignment=ft.alignment.top_right, padding=ft.padding.only(right=-10, top=-10))
+                ft.Container(content=self.btn_close, alignment=ft.alignment.top_right, padding=ft.padding.only(right=-10, top=-10)),
+                self.audio_end
             ]),
             bgcolor="#FFD700", padding=20, border_radius=20, 
             width=220, height=180, alignment=ft.alignment.center,
@@ -92,6 +100,10 @@ class TimerOverlay(ft.Container):
         
         if self.current_timer_id == my_id:
             self.txt_timer.value = "¡LISTO!"
+            try:
+                self.audio_end.play()
+            except: pass
+            
             if self.page:
                 try:
                     self.update()

@@ -3,71 +3,104 @@ import threading
 
 def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerencia_txt):
     """
-    Componente funcional que retorna una tarjeta de ejercicio en Flet con diseño revisado.
-    La imagen ahora se sitúa en la parte superior, centrada, y las series debajo.
+    Componente ExerciseCard REDISEÑADO (Estilo Pro).
+    Tarjetas con Glassmorphism, mejores checkboxes y feedback visual.
     """
-    lbl_sugerencia = ft.Text(f"Sugerencia: {sugerencia_txt}", size=11, color="#FFD700", weight="bold")
+    lbl_sugerencia = ft.Text(f"SIGUIENTE: {sugerencia_txt}", size=10, weight="bold", color="#FFD700")
     
-    # Fila de series (Checkboxes) centrada
-    row_series = ft.Row(wrap=True, spacing=5, alignment="center", vertical_alignment="center")
+    # Fila de series con diseño de "Chips"
+    row_series = ft.Row(wrap=True, spacing=8, alignment="center")
     
-    def create_on_change(ex_id, idx, t):
-        def handler(e):
-            on_check(ex_id, idx, e.control.value, t)
-            e.control.update()
-        return handler
+    def on_checkbox_click(e, idx):
+        # Efecto visual al marcar
+        e.control.scale = 1.2
+        e.control.update()
+        threading.Timer(0.2, lambda: setattr(e.control, "scale", 1.0) or e.control.update()).start()
+        
+        on_check(ex.id, idx, e.control.value, ex.descanso)
 
-    # 1. Añadir Checkboxes
     for s_idx in range(ex.series):
         is_checked = is_checked_func(ex.id, s_idx)
         cb = ft.Checkbox(
-            label=f"S{s_idx+1}", 
+            label=f"{s_idx+1}", 
             value=is_checked,
-            fill_color="#FFD700",
-            on_change=create_on_change(ex.id, s_idx, ex.descanso)
+            fill_color={
+                ft.MaterialState.SELECTED: "#FFD700",
+                ft.MaterialState.DEFAULT: "white24",
+            },
+            check_color="black",
+            on_change=lambda e, idx=s_idx: on_checkbox_click(e, idx),
+            scale=1.1
         )
         row_series.controls.append(cb)
 
-    txt_peso_hoy = ft.TextField(label="Kg", width=70, height=35, text_size=12, border_color="#FFD700")
+    txt_peso_hoy = ft.TextField(
+        label="Peso", 
+        width=80, 
+        height=45, 
+        text_size=14, 
+        border_color="white24",
+        focused_border_color="#FFD700",
+        suffix_text="kg",
+        content_padding=10
+    )
 
     def internal_guardar_peso(e):
         on_save_peso(e, ex.nombre, txt_peso_hoy, lbl_sugerencia)
 
-    # RETORNO CON ESTRUCTURA REVISADA (Imagen Arriba, Series Abajo)
     return ft.Container(
         content=ft.Column([
-            # Nivel 1: Título y Timer
+            # Cabecera: Nombre y Timer
             ft.Row([
-                ft.Text(ex.nombre, weight="bold", size=15, expand=True),
-                ft.IconButton(ft.icons.TIMER, icon_color="#FFD700", on_click=lambda _: on_timer(ex.descanso))
+                ft.Column([
+                    ft.Text(ex.nombre.upper(), weight="bold", size=16, color="white", letter_spacing=1),
+                    ft.Text(f"{ex.series} Series • {ex.reps} Reps", size=12, color="white54"),
+                ], expand=True),
+                ft.Container(
+                    content=ft.IconButton(ft.icons.TIMER_OUTLINED, icon_color="#FFD700", on_size=20, on_click=lambda _: on_timer(ex.descanso)),
+                    bgcolor="white10", border_radius=10
+                )
             ]),
             
-            # Nivel 2: Imagen Técnica (CENTRADA Y ARRIBA - MÁS GRANDE)
+            # Imagen con efecto de profundidad
             ft.Container(
                 content=ft.Image(
                     src=ex.imagen_url,
-                    width=180,
-                    height=180,
+                    width=220,
+                    height=200,
                     fit=ft.ImageFit.CONTAIN,
-                    border_radius=10,
                 ),
                 alignment=ft.alignment.center,
-                border_radius=10,
-                bgcolor="black",
-                width=None, # Ocupa el ancho disponible para centrar
-                height=200,
-                padding=5
+                bgcolor="black26",
+                border_radius=20,
+                padding=10,
+                border=ft.border.all(1, "white10")
             ),
             
-            # Nivel 3: Series (Checkboxes)
-            row_series,
+            # Control de Series
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("MARCAR SERIES COMPLETADAS", size=10, weight="bold", color="white38", text_align="center"),
+                    row_series,
+                ], horizontal_alignment="center", spacing=5),
+                padding=10,
+                bgcolor="white05",
+                border_radius=15
+            ),
             
-            # Nivel 4: Stats (Reps) y Guardado de Peso
+            # Registro de Peso
             ft.Row([
-                ft.Column([ft.Text(f"Reps: {ex.reps}", size=11, color="white54"), lbl_sugerencia], expand=True),
+                ft.Column([lbl_sugerencia], expand=True),
                 txt_peso_hoy,
-                ft.IconButton(ft.icons.SAVE, icon_color="#4CAF50", on_click=internal_guardar_peso)
-            ])
-        ], spacing=10),
-        padding=12, bgcolor="#1E1E1E", border_radius=12
+                ft.Container(
+                    content=ft.IconButton(ft.icons.SAVE_ROUNDED, icon_color="white", on_click=internal_guardar_peso),
+                    bgcolor="#4CAF50", border_radius=10, width=45, height=45
+                )
+            ], alignment="center")
+        ], spacing=15),
+        padding=20,
+        bgcolor="#1E1E1E",
+        border_radius=25,
+        border=ft.border.all(1, "white10"),
+        margin=ft.margin.only(bottom=10)
     )

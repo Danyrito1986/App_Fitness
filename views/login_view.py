@@ -35,7 +35,19 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
         try:
             if is_login_mode:
                 res = db.login_user(client, email, password)
-                if res.user:
+                if res.user and res.session:
+                    # Guardar sesión para persistencia de 30 días
+                    try:
+                        import time
+                        session_data = {
+                            "access_token": res.session.access_token,
+                            "refresh_token": res.session.refresh_token,
+                            "login_timestamp": time.time()
+                        }
+                        page.client_storage.set("user_session", session_data)
+                    except Exception as e:
+                        print(f"Error guardando sesión: {e}")
+                        
                     show_snackbar("¡Bienvenido de nuevo! 👋")
                     on_login_success()
                 else:

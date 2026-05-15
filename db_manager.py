@@ -26,6 +26,10 @@ def login_user(client: Client, email: str, password: str):
     """Inicia sesion con email y contrasena."""
     return client.auth.sign_in_with_password({"email": email, "password": password})
 
+def set_session(client: Client, access_token: str, refresh_token: str):
+    """Restaura una sesion existente usando tokens."""
+    return client.auth.set_session(access_token, refresh_token)
+
 def logout_user(client: Client):
     """Cierra la sesion del usuario."""
     try:
@@ -149,6 +153,39 @@ def get_workout_stats(client: Client, user_id: int) -> int:
         response = client.table("historial_entrenos").select("*", count="exact").eq("usuario_id", user_id).execute()
         return response.count if response.count is not None else 0
     except: return 0
+
+def get_streak(client: Client, user_id: int) -> int:
+    """Calcula la racha actual de dias seguidos de entrenamiento."""
+    try:
+        from datetime import datetime, timedelta
+        # Obtener fechas unicas de entrenamiento ordenadas
+        res = client.table("historial_entrenos").select("fecha").eq("usuario_id", user_id).order("fecha", desc=True).execute()
+        if not res.data: return 0
+        
+        fechas = sorted(list(set([datetime.strptime(r["fecha"], "%Y-%m-%d").date() for r in res.data])), reverse=True)
+        if not fechas: return 0
+        
+        streak = 0
+        hoy = datetime.now().date()
+        ultimo_entreno = fechas[0]
+        
+        # Si el ultimo entreno no fue hoy ni ayer, la racha se rompio
+        if ultimo_entreno < hoy - timedelta(days=1):
+            return 0
+            
+        for i in range(len(fechas)):
+            if i == 0:
+                streak = 1
+                continue
+            
+            if fechas[i-1] - fechas[i] == timedelta(days=1):
+                streak += 1
+            else:
+                break
+        return streak
+    except Exception as e:
+        print(f"Error en get_streak: {e}")
+        return 0
 
 def log_water(client: Client, user_id: int, cups: int) -> bool:
     try:

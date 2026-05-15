@@ -43,7 +43,7 @@ class VisualChaosTest(unittest.TestCase):
             card = ExerciseCard(ex, lambda i, s: False, lambda *a: None, lambda *a: None, lambda *a: None, "10kg")
             # Buscamos el control de texto del nombre (Lado Izquierdo - Índice 0)
             row_principal = card.content
-            col_info = row_principal.controls[0] # Ahora es el primer elemento
+            col_info = row_principal.controls[0] # Vuelve a ser el primer elemento
             row_nombre = col_info.controls[0]
             text_nombre = row_nombre.controls[0]
             
