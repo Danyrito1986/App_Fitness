@@ -65,7 +65,7 @@ def calculate_macros(user: User):
         "ajuste": ajuste,
         "p": int(prot),
         "c": int(carb),
-        "f": int(fat),
+        "g": int(fat),
         "bf": round(bf, 1),
         "masa_magra": round(masa_magra, 1)
     }

@@ -17,8 +17,9 @@ def home_view(page: ft.Page, client: Client, user: User, show_snackbar, logout_h
     user.mes_actual = (stats // 20) + 1
 
     # --- LÓGICA DE HIDRATACIÓN ---
-    meta_base = user.peso_actual * 0.035
+    meta_base = max(10, user.peso_actual) * 0.035
     meta_litros = round(meta_base * (1.2 if user.nivel == "Pro" else 1.0), 2)
+    meta_litros = max(0.1, meta_litros) # Evitar división por cero
     consumo_actual_l = round(agua_hoy * 0.25, 2)
     restante_l = max(0, round(meta_litros - consumo_actual_l, 2))
 
