@@ -168,24 +168,33 @@ def main(page: ft.Page):
             
             status_msg = "Buscando sesión de usuario..."
             
-            # --- LÓGICA DE PERSISTENCIA DE 30 DÍAS ---
+            # --- LÓGICA DE PERSISTENCIA DE 30 DÍAS (BLINDADA) ---
             try:
                 import time
                 saved_session = page.client_storage.get("user_session")
-                if saved_session:
+                if saved_session and isinstance(saved_session, dict):
                     login_time = saved_session.get("login_timestamp", 0)
                     now = time.time()
-                    # 30 días en segundos = 30 * 24 * 60 * 60 = 2,592,000
+                    # 30 días = 2,592,000 seg
                     if (now - login_time) < 2592000:
-                        db.set_session(client, saved_session["access_token"], saved_session["refresh_token"])
-                        print("DEBUG_AUTH: Sesión recuperada desde storage.")
+                        try:
+                            db.set_session(client, saved_session["access_token"], saved_session["refresh_token"])
+                            print("DEBUG_AUTH: Sesión recuperada.")
+                        except:
+                            print("DEBUG_AUTH: Token inválido o expirado en Supabase.")
+                            page.client_storage.remove("user_session")
                     else:
-                        print("DEBUG_AUTH: Sesión expirada (30 días).")
+                        print("DEBUG_AUTH: Sesión expirada por tiempo.")
                         page.client_storage.remove("user_session")
             except Exception as e:
-                print(f"DEBUG_AUTH_ERROR: Fallo al recuperar sesión: {e}")
+                print(f"DEBUG_AUTH_SILENT_ERROR: {e}")
 
-            session_user = db.get_user(client)
+            # Intentar obtener usuario (Si no hay sesión o falló, devolverá None)
+            session_user = None
+            try:
+                session_user = db.get_user(client)
+            except:
+                print("DEBUG_AUTH: No se pudo validar usuario, enviando a login.")
             
             page.controls.clear()
             if session_user:
@@ -194,6 +203,8 @@ def main(page: ft.Page):
                 page.add(container_principal)
                 update_view(0)
             else:
+                # Si no hay usuario, simplemente mostramos el login en lugar de dar error de conexión
+                nav_bar.visible = False
                 page.add(container_principal)
                 container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
             page.update()
