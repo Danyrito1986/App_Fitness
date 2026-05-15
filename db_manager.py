@@ -162,7 +162,14 @@ def get_streak(client: Client, user_id: int) -> int:
         res = client.table("historial_entrenos").select("fecha").eq("usuario_id", user_id).order("fecha", desc=True).execute()
         if not res.data: return 0
         
-        fechas = sorted(list(set([datetime.strptime(r["fecha"], "%Y-%m-%d").date() for r in res.data])), reverse=True)
+        # Limpiar y parsear fechas (Supabase envia ISO timestamps completos)
+        lista_fechas = []
+        for r in res.data:
+            # Extraer solo la parte de la fecha YYYY-MM-DD
+            fecha_str = r["fecha"].split("T")[0]
+            lista_fechas.append(datetime.strptime(fecha_str, "%Y-%m-%d").date())
+            
+        fechas = sorted(list(set(lista_fechas)), reverse=True)
         if not fechas: return 0
         
         streak = 0
