@@ -20,6 +20,18 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         status_header = StatusHeader(user)
         save_timer = None
         
+        # --- INDICADOR DE GUARDADO ASÍNCRONO (PREMIUM FEEDBACK) ---
+        sync_icon = ft.Icon(name=ft.icons.CLOUD_DONE, color="#4CAF50", size=14)
+        sync_txt = ft.Text("Sincronizado", size=11, color="white54", weight="bold")
+        sync_indicator = ft.Container(
+            content=ft.Row(
+                [sync_icon, sync_txt],
+                alignment="center",
+                spacing=5
+            ),
+            padding=ft.padding.only(right=10)
+        )
+        
         # --- ESTADO Y PERSISTENCIA ---
         mes_seleccionado = user.mes_actual
         semana_seleccionada = (user.entrenos_mes // 5) % 4 + 1
@@ -29,7 +41,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
         hoy_str = datetime.now().strftime("%Y-%m-%d")
         
         # --- BARRA DE PROGRESO DE ENTRENAMIENTO ---
-        progress_bar = ft.ProgressBar(value=0, color="#FFD700", bgcolor="white10", height=4, border_radius=2)
+        progress_bar = ft.ProgressBar(value=0, color="#FFD700", bgcolor="white10", height=4)
         lbl_percent = ft.Text("0%", size=12, color="white54", weight="bold")
         
         def update_overall_progress():
@@ -37,20 +49,11 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 total_exs = len(lista_ejercicios.controls)
                 if total_exs == 0: return
                 
-                completados = 0
-                for card in lista_ejercicios.controls:
-                    if isinstance(card, ft.Container):
-                        # Verificar si al menos una serie está marcada en la tarjeta
-                        key = f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_"
-                        # Esta es una simplificación, en un caso real contaríamos series reales
-                        # Por ahora, si hay datos en progreso_local para este ejercicio
-                        pass
-                
-                # Cálculo más preciso basado en progreso_local
+                # Cálculo preciso basado en progreso_local para el día actual
                 keys_hoy = [k for k in progreso_local.get("completados", {}).keys() 
                            if k.startswith(f"{mes_seleccionado}_{semana_seleccionada}_{dia_seleccionado}_")]
                 
-                # Si hay ejercicios cargados, calculamos el % de ejercicios que tienen al menos 1 serie
+                # Si hay ejercicios cargados, calculamos el % de ejercicios que tienen al menos 1 serie marcada
                 unique_ex_ids = set([k.split("_")[-1] for k in keys_hoy])
                 percent = len(unique_ex_ids) / total_exs if total_exs > 0 else 0
                 progress_bar.value = min(percent, 1.0)
@@ -97,9 +100,17 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
         def debounced_save():
             nonlocal save_timer
+            try:
+                sync_icon.name = ft.icons.SYNC
+                sync_icon.color = "#FFD700"
+                sync_txt.value = "Guardando..."
+                sync_txt.color = "#FFD700"
+                page.update()
+            except: pass
+            
             if save_timer:
                 save_timer.cancel()
-            save_timer = threading.Timer(1.0, persistir_nube)
+            save_timer = threading.Timer(0.1, persistir_nube)
             save_timer.start()
 
         def persistir_nube():
@@ -108,10 +119,31 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 datos_a_guardar = copy.deepcopy(progreso_local["completados"])
                 if db.save_workout_progress(client, user.id, hoy_str, datos_a_guardar):
                     print("DEBUG_PRO: Sincronización exitosa ✅")
+                    try:
+                        sync_icon.name = ft.icons.CLOUD_DONE
+                        sync_icon.color = "#4CAF50"
+                        sync_txt.value = "Sincronizado"
+                        sync_txt.color = "white54"
+                        page.update()
+                    except: pass
                 else:
                     print("DEBUG_PRO: Error en la sincronización de nube ❌")
+                    try:
+                        sync_icon.name = ft.icons.CLOUD_OFF
+                        sync_icon.color = "#F44336"
+                        sync_txt.value = "Offline / Sin Nube"
+                        sync_txt.color = "#F44336"
+                        page.update()
+                    except: pass
             except Exception as e:
                 print(f"DEBUG_ERR: Error persistiendo en nube: {e}")
+                try:
+                    sync_icon.name = ft.icons.CLOUD_OFF
+                    sync_icon.color = "#F44336"
+                    sync_txt.value = "Error Sincro"
+                    sync_txt.color = "#F44336"
+                    page.update()
+                except: pass
 
         def guardar_progreso_serie(ex_id, serie_idx, valor, t_descanso):
             try:
@@ -145,6 +177,10 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 return False
 
         # --- OVERLAY DE RESUMEN FINAL ---
+        lbl_resumen_ejercicios = ft.Text("0", size=20, weight="bold")
+        lbl_resumen_series = ft.Text("0", size=20, weight="bold")
+        lbl_resumen_calorias = ft.Text("~350", size=20, weight="bold")
+
         summary_overlay = ft.Container(
             content=ft.Container(
                 content=ft.Column([
@@ -152,12 +188,12 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                     ft.Text("¡ENTRENAMIENTO COMPLETADO!", size=22, weight="bold", color="white", text_align="center"),
                     ft.Divider(color="white10"),
                     ft.Row([
-                        ft.Column([ft.Text("EJERCICIOS", size=10, color="white54"), ft.Text("0", id="sum_ex", size=20, weight="bold")], horizontal_alignment="center"),
-                        ft.Column([ft.Text("SERIES", size=10, color="white54"), ft.Text("0", id="sum_ser", size=20, weight="bold")], horizontal_alignment="center"),
-                        ft.Column([ft.Text("CALORÍAS", size=10, color="white54"), ft.Text("~350", size=20, weight="bold")], horizontal_alignment="center"),
+                        ft.Column([ft.Text("EJERCICIOS", size=10, color="white54"), lbl_resumen_ejercicios], horizontal_alignment="center"),
+                        ft.Column([ft.Text("SERIES", size=10, color="white54"), lbl_resumen_series], horizontal_alignment="center"),
+                        ft.Column([ft.Text("CALORÍAS", size=10, color="white54"), lbl_resumen_calorias], horizontal_alignment="center"),
                     ], alignment="spaceAround", width=300),
                     ft.Container(height=10),
-                    ft.ElevatedButton("COMPARTIR LOGRO", icon=ft.icons.SHARE, style=ft.ButtonStyle(bgcolor="white10")),
+                    ft.ElevatedButton("COMPARTIR LOGRO", icon=ft.icons.SHARE, bgcolor="white10"),
                     ft.TextButton("CERRAR", on_click=lambda _: setattr(summary_overlay, "visible", False) or page.update())
                 ], horizontal_alignment="center", spacing=20),
                 bgcolor="#1E1E1E", padding=30, border_radius=30, border=ft.border.all(1, "white10"),
@@ -174,9 +210,9 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             num_ex = len(set([k.split("_")[-1] for k in keys_hoy]))
             num_series = sum([len(progreso_local["completados"][k]) for k in keys_hoy])
             
-            # Actualizar textos del resumen (Buscando por referencia manual ya que id en Flet es interno)
-            summary_overlay.content.content.controls[3].controls[0].controls[1].value = str(num_ex)
-            summary_overlay.content.content.controls[3].controls[1].controls[1].value = str(num_series)
+            # Actualizar textos del resumen (Seguro y directo)
+            lbl_resumen_ejercicios.value = str(num_ex)
+            lbl_resumen_series.value = str(num_series)
             
             summary_overlay.visible = True
             page.update()
@@ -245,6 +281,9 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
                         card = ExerciseCard(ex, obtener_progreso_serie, guardar_progreso_serie, on_save_peso, on_timer_click, sugerencia_txt)
                         lista_ejercicios.controls.append(card)
+                
+                # Actualizar barra de progreso al cargar
+                update_overall_progress()
             except Exception as e:
                 print(f"Error en update_workout_list: {e}")
                 lista_ejercicios.controls.append(ft.Text("Error al cargar la rutina.", color="red"))
@@ -257,10 +296,8 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 ft.ElevatedButton(
                     f"MES {i}", 
                     on_click=lambda e, n=i: set_mes(n) if n <= user.mes_actual else show_snackbar("Mes bloqueado", True),
-                    style=ft.ButtonStyle(
-                        bgcolor="#FFD700" if i == mes_seleccionado else "#333333",
-                        color="black" if i == mes_seleccionado else "white"
-                    )
+                    bgcolor="#FFD700" if i == mes_seleccionado else "#333333",
+                    color="black" if i == mes_seleccionado else "white"
                 ) for i in range(1, 7)
             ]
 
@@ -269,10 +306,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             row_semanas.controls = [
                 ft.TextButton(
                     f"SEM {i}", 
-                    on_click=lambda e, n=i: set_semana(n),
-                    style=ft.ButtonStyle(
-                        color="#FFD700" if i == semana_seleccionada else "white54"
-                    )
+                    on_click=lambda e, n=i: set_semana(n)
                 ) for i in range(1, 5)
             ]
 
@@ -281,10 +315,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
             row_dias.controls = [
                 ft.TextButton(
                     f"DÍA {i}", 
-                    on_click=lambda e, n=i: update_workout_list(n),
-                    style=ft.ButtonStyle(
-                        color="#FFD700" if i == dia_seleccionado else "white54"
-                    )
+                    on_click=lambda e, n=i: update_workout_list(n)
                 ) for i in range(1, 6)
             ]
 
@@ -294,8 +325,23 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
 
         content_area = ft.Container(
             content=ft.Column([
-                ft.Text("ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
+                ft.Row([
+                    ft.Text("ENTRENAMIENTO", size=22, weight="bold", color="#FFD700"),
+                    sync_indicator
+                ], alignment="spaceBetween"),
                 status_header,
+                ft.Divider(height=10, color="transparent"),
+                # BARRA DE PROGRESO DE RUTINA (INYECCIÓN DE FIX)
+                ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Text("PROGRESO HOY", size=10, color="white54", weight="bold"),
+                            lbl_percent
+                        ], alignment="spaceBetween"),
+                        progress_bar
+                    ], spacing=5),
+                    padding=ft.padding.only(left=20, right=20)
+                ),
                 ft.Divider(height=10, color="transparent"),
                 row_meses,
                 row_semanas,
@@ -305,7 +351,7 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 lista_ejercicios,
                 ft.Container(height=20),
                 ft.ElevatedButton("FINALIZAR ENTRENAMIENTO", icon=ft.icons.CHECK_CIRCLE, on_click=finalizar_entreno,
-                                style=ft.ButtonStyle(bgcolor="#4CAF50", color="white"), width=350, height=50),
+                                bgcolor="#4CAF50", color="white", width=350, height=50),
                 ft.Container(height=40)
             ], horizontal_alignment="center", scroll=ft.ScrollMode.ADAPTIVE),
             expand=True,
@@ -324,7 +370,10 @@ def workout_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 ft.Icon(ft.icons.ERROR_OUTLINE, color="red", size=50),
                 ft.Text("Error al cargar el módulo de entrenamiento.", color="white", size=18, weight="bold"),
                 ft.Text(f"Detalle: {str(e)}", color="white54", text_align="center"),
-                ft.ElevatedButton("Reintentar", on_click=lambda _: page.go("/workout"))
+                ft.ElevatedButton(
+                    "Regresar a Inicio", 
+                    on_click=lambda _: setattr(page.navigation_bar, "selected_index", 0) or page.navigation_bar.on_change(ft.ControlEvent(target=page.navigation_bar.uid, name="change", data="0", control=page.navigation_bar, page=page))
+                )
             ], alignment="center", horizontal_alignment="center"),
             expand=True, bgcolor="#121212", padding=40
         )

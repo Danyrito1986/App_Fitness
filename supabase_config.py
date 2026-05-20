@@ -13,7 +13,6 @@ http_client = httpx.Client(
 def create_custom_client(url: str, key: str) -> Client:
     """Crea un cliente de Supabase con configuraciones de red optimizadas para producción."""
     options = ClientOptions(
-        httpx_client=http_client,
         postgrest_client_timeout=45,
         storage_client_timeout=45
     )

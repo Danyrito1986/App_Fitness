@@ -51,6 +51,13 @@ def main(page: ft.Page):
     # Revertido a propiedades clásicas de Flet 0.21.x
     page.window_width = 420
     page.window_height = 800
+    # --- VARIABLES DE ESTADO ---
+    user_actual = None
+    client = None
+    vistas_cache = {}
+
+    # Contenedor raíz persistente para evitar colapsos de layout y pantallas negras en Windows
+    cuerpo_app = ft.Container(expand=True, bgcolor="#121212")
 
     # Pantalla de Carga Inicial
     loading_screen = ft.Container(
@@ -61,7 +68,8 @@ def main(page: ft.Page):
         expand=True,
         bgcolor="#121212"
     )
-    page.add(loading_screen)
+    cuerpo_app.content = loading_screen
+    page.controls.append(cuerpo_app)
     page.update()
 
     # --- SISTEMA DE NOTIFICACIONES ---
@@ -73,12 +81,6 @@ def main(page: ft.Page):
         )
         page.snack_bar.open = True
         page.update()
-
-    # --- VARIABLES DE ESTADO ---
-    container_principal = ft.Container(expand=True, padding=15, bgcolor="#121212")
-    user_actual = None
-    client = None
-    vistas_cache = {}
 
     def logout_handler():
         nonlocal user_actual
@@ -93,33 +95,75 @@ def main(page: ft.Page):
         user_actual = None
         vistas_cache.clear()
         nav_bar.visible = False
-        container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
+        login_content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
+        login_container = ft.Container(
+            content=login_content,
+            padding=15,
+            expand=True,
+            bgcolor="#121212"
+        )
+        cuerpo_app.content = login_container
         page.update()
 
     def update_view(index):
         if not user_actual: return
         
-        # Siempre refrescamos el usuario desde la nube/referencia antes de cargar ciertas vistas
-        # o simplemente invalidamos la caché si venimos del perfil
-        if index == 0:
-            content = home_view(page, client, user_actual, show_snackbar, logout_handler)
-        elif index == 1:
-            content = profile_view(page, client, user_actual, show_snackbar)
-        elif index == 2:
-            content = workout_view(page, client, user_actual, show_snackbar)
-        elif index == 3:
-            content = diet_view(page, client, user_actual, show_snackbar)
-        elif index == 4:
-            content = progress_view(page, client, user_actual, show_snackbar)
-        else: return
+        try:
+            if index == 0:
+                content = home_view(page, client, user_actual, show_snackbar, logout_handler)
+            elif index == 1:
+                content = profile_view(page, client, user_actual, show_snackbar)
+            elif index == 2:
+                content = workout_view(page, client, user_actual, show_snackbar)
+            elif index == 3:
+                content = diet_view(page, client, user_actual, show_snackbar)
+            elif index == 4:
+                content = progress_view(page, client, user_actual, show_snackbar)
+            else: return
+                
+            view_container = ft.Container(
+                content=content,
+                padding=15,
+                expand=True,
+                bgcolor="#121212"
+            )
+            cuerpo_app.content = view_container
+        except Exception as e:
+            print(f"\nCRITICAL_VIEW_ERROR [Index {index}]: {e}")
+            import traceback
+            traceback.print_exc()
+            show_snackbar(f"Error al cargar vista: {e}", True)
             
-        container_principal.content = content
+            # --- INTERFAZ DE FALLBACK PARA ERRORES ---
+            fallback_view = ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, size=50, color="#FFD700"),
+                    ft.Text("Módulo temporalmente inactivo", size=18, weight="bold", color="white"),
+                    ft.Text(f"Detail: {str(e)}", color="white54", text_align="center", size=12),
+                    ft.ElevatedButton(
+                        "Reintentar ahora", 
+                        icon=ft.icons.REFRESH, 
+                        on_click=lambda _: update_view(index),
+                        style=ft.ButtonStyle(
+                            color="white",
+                            bgcolor="white10",
+                            shape=ft.RoundedRectangleBorder(radius=10)
+                        )
+                    )
+                ], horizontal_alignment="center", alignment="center", spacing=15),
+                padding=20,
+                alignment=ft.alignment.center,
+                expand=True,
+                bgcolor="#121212"
+            )
+            cuerpo_app.content = fallback_view
+            
         page.update()
 
     def on_nav_change(e):
         update_view(int(e.control.selected_index))
 
-    # Uso del componente recuperado de forma segura
+    # Uso del componente de navegación de forma segura
     destinations = []
     nav_dest = getattr(ft, "NavigationDestination", None)
     
@@ -132,7 +176,6 @@ def main(page: ft.Page):
             nav_dest(icon=ft.icons.SHOW_CHART, label="Progreso"),
         ]
     else:
-        # Fallback extremo si nada funcionó
         print("CRITICAL: NavigationDestination no encontrado.")
 
     nav_bar = ft.NavigationBar(
@@ -189,43 +232,46 @@ def main(page: ft.Page):
             except Exception as e:
                 print(f"DEBUG_AUTH_SILENT_ERROR: {e}")
 
-            # Intentar obtener usuario (Si no hay sesión o falló, devolverá None)
+            # Intentar obtener usuario
             session_user = None
             try:
                 session_user = db.get_user(client)
             except:
                 print("DEBUG_AUTH: No se pudo validar usuario, enviando a login.")
             
-            page.controls.clear()
             if session_user:
                 user_actual = session_user
                 nav_bar.visible = True
-                page.add(container_principal)
                 update_view(0)
             else:
-                # Si no hay usuario, simplemente mostramos el login en lugar de dar error de conexión
                 nav_bar.visible = False
-                page.add(container_principal)
-                container_principal.content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
-            page.update()
+                login_content = login_view(page, client, on_login_success=show_main_app, show_snackbar=show_snackbar)
+                login_container = ft.Container(
+                    content=login_content,
+                    padding=15,
+                    expand=True,
+                    bgcolor="#121212"
+                )
+                cuerpo_app.content = login_container
+                page.update()
         except Exception as e:
             error_detallado = f"Punto de fallo: {status_msg}\nError: {str(e)}"
             print(f"DEBUG_CONNECTION_ERROR: {error_detallado}")
-            page.controls.clear()
-            page.add(
-                ft.Container(
-                    content=ft.Column([
-                        ft.Icon(ft.icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
-                        ft.Text("Error de conexión", size=20, weight="bold"),
-                        ft.Text(error_detallado, color="white54", text_align="center", size=12),
-                        ft.ElevatedButton("Reintentar ahora", icon=ft.icons.REFRESH, on_click=lambda _: inicializar_conexion())
-                    ], horizontal_alignment="center", alignment="center"),
-                    expand=True, alignment=ft.alignment.center
-                )
+            nav_bar.visible = False
+            error_view = ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.icons.SIGNAL_WIFI_OFF, size=60, color="red700"),
+                    ft.Text("Error de conexión", size=20, weight="bold", color="white"),
+                    ft.Text(error_detallado, color="white54", text_align="center", size=12),
+                    ft.ElevatedButton("Reintentar ahora", icon=ft.icons.REFRESH, on_click=lambda _: inicializar_conexion())
+                ], horizontal_alignment="center", alignment="center"),
+                expand=True, alignment=ft.alignment.center,
+                bgcolor="#121212"
             )
+            cuerpo_app.content = error_view
             page.update()
 
-    threading.Thread(target=inicializar_conexion, daemon=True).start()
+    inicializar_conexion()
 
 if __name__ == "__main__":
     try:
