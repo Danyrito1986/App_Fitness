@@ -106,14 +106,32 @@ def get_routines(client: Client):
 
 def get_dynamic_exercises(client: Client, genero: str, nivel: str, mes: int, dia: int, objetivo: str, semana: int = 1) -> list[Exercise]:
     try:
-        query = client.table("ejercicios").select("*").eq("genero", genero).eq("nivel", nivel).eq("mes", mes).eq("dia", dia).eq("objetivo", objetivo)
-        try: query = query.eq("semana", semana)
-        except: pass
+        # Intento 1: Consulta completa con todos los filtros
+        query = client.table("ejercicios").select("*").eq("genero", genero).eq("nivel", nivel).eq("mes", mes).eq("dia", dia).eq("objetivo", objetivo).eq("semana", semana)
         response = query.execute()
+        
+        # Intento 2 (Fallback Mes 1): Si el mes avanzado no tiene datos, volvemos al mes 1 (Bucle de contenido)
+        if not response.data and mes > 1:
+            print(f"DEBUG_PRO: Mes {mes} sin datos, intentando fallback a Mes 1...")
+            query = client.table("ejercicios").select("*").eq("genero", genero).eq("nivel", nivel).eq("mes", 1).eq("dia", dia).eq("objetivo", objetivo).eq("semana", semana)
+            response = query.execute()
+
+        # Intento 3 (Fallback General): Si aun no hay datos, relajamos filtros de objetivo y semana
         if not response.data:
-            response = client.table("ejercicios").select("*").eq("genero", genero).eq("nivel", nivel).eq("mes", mes).eq("dia", dia).execute()
+            print("DEBUG_PRO: Relajando filtros de objetivo/semana...")
+            response = client.table("ejercicios").select("*").eq("genero", genero).eq("nivel", nivel).eq("mes", 1).eq("dia", dia).execute()
+        
         if not response.data: return []
-        return [Exercise(id=ej["id"], nombre=ej["nombre"], series=ej["series"], reps=ej["reps"], rutina_id=ej.get("rutina_id", 0), descanso=ej.get("descanso", 60), imagen_url=ej.get("imagen_url") or get_exercise_image(ej["nombre"])) for ej in response.data]
+        
+        return [Exercise(
+            id=ej["id"], 
+            nombre=ej["nombre"], 
+            series=ej["series"], 
+            reps=ej["reps"], 
+            rutina_id=ej.get("rutina_id", 0), 
+            descanso=ej.get("descanso", 60), 
+            imagen_url=ej.get("imagen_url") or get_exercise_image(ej["nombre"])
+        ) for ej in response.data]
     except Exception as e:
         print(f"DEBUG_PRO: Error en get_dynamic_exercises: {e}")
         return []
