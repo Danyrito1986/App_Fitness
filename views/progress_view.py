@@ -55,13 +55,16 @@ def progress_view(page: ft.Page, client: Client, user: User, show_snackbar):
                 tooltip_bgcolor="black",
                 expand=True
             )
-        chart_container.update()
+        try:
+            if chart_container.page:
+                chart_container.update()
+        except: pass
 
     # --- UI COMPONENTS ---
     
     header = ft.Container(
         content=ft.Column([
-            ft.Text("TU EVOLUCIÓN", size=24, weight="bold", color="white", letter_spacing=1.5),
+            ft.Text("TU EVOLUCIÓN", size=24, weight="bold", color="white"),
             ft.Text("Visualiza tus récords y metas alcanzadas", size=14, color="white54"),
         ]),
         padding=ft.padding.only(bottom=20)

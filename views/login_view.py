@@ -66,7 +66,8 @@ def login_view(page: ft.Page, client: Client, on_login_success, show_snackbar):
 
     action_button = ft.ElevatedButton(
         text="Iniciar Sesión",
-        style=ft.ButtonStyle(color="white", bgcolor="blue700"),
+        color="white",
+        bgcolor="blue700",
         on_click=handle_action,
         width=300
     )

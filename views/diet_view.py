@@ -23,7 +23,7 @@ def diet_view(page: ft.Page, client: Client, user: User, show_snackbar):
         return ft.Column([ft.Text("Error al cargar datos nutricionales", color="red")])
 
     macros = calculate_macros(user)
-    cal, p, c, f = macros['cal'], macros['p'], macros['c'], macros['f']
+    cal, p, c, f = macros['cal'], macros['p'], macros['c'], macros['g']
     
     dia_semana = datetime.now().weekday()
     nombres_dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]

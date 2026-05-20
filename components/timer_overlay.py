@@ -12,9 +12,7 @@ class TimerOverlay(ft.Container):
         
         # Audio de notificación (Beep)
         self.audio_end = ft.Audio(
-            src="https://lrhub.github.io/flet-samples/audio/success.mp3",
-            volume=1,
-            balance=0
+            src="https://lrhub.github.io/flet-samples/audio/success.mp3"
         )
         
         # Botón de cierre para permitir al usuario cancelar el descanso

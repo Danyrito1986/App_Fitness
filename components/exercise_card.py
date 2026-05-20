@@ -24,10 +24,7 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
         cb = ft.Checkbox(
             label=f"{s_idx+1}", 
             value=is_checked,
-            fill_color={
-                ft.MaterialState.SELECTED: "#FFD700",
-                ft.MaterialState.DEFAULT: "white24",
-            },
+            fill_color="#FFD700",
             check_color="black",
             on_change=lambda e, idx=s_idx: on_checkbox_click(e, idx),
             scale=1.1
@@ -40,7 +37,6 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
         height=45, 
         text_size=14, 
         border_color="white24",
-        focused_border_color="#FFD700",
         suffix_text="kg",
         content_padding=10
     )
@@ -53,11 +49,11 @@ def ExerciseCard(ex, is_checked_func, on_check, on_save_peso, on_timer, sugerenc
             # Cabecera: Nombre y Timer
             ft.Row([
                 ft.Column([
-                    ft.Text(ex.nombre.upper(), weight="bold", size=16, color="white", letter_spacing=1),
+                    ft.Text(ex.nombre.upper(), weight="bold", size=16, color="white", overflow=ft.TextOverflow.ELLIPSIS, max_lines=1),
                     ft.Text(f"{ex.series} Series • {ex.reps} Reps", size=12, color="white54"),
                 ], expand=True),
                 ft.Container(
-                    content=ft.IconButton(ft.icons.TIMER_OUTLINED, icon_color="#FFD700", on_size=20, on_click=lambda _: on_timer(ex.descanso)),
+                    content=ft.IconButton(ft.icons.TIMER_OUTLINED, icon_color="#FFD700", icon_size=20, on_click=lambda _: on_timer(ex.descanso)),
                     bgcolor="white10", border_radius=10
                 )
             ]),
